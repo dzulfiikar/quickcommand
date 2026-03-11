@@ -53,16 +53,16 @@
       ],
       "extendInfo": {
         "LSUIElement": true
-      }
+      },
+      "electronLanguages": ["en"]
     }
   },
-  "dependencies": {
+  "dependencies": {},
+  "devDependencies": {
     "fuse.js": "^7.1.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "zod": "^4.3.6"
-  },
-  "devDependencies": {
+    "zod": "^4.3.6",
     "@biomejs/biome": "^2.4.6",
     "@types/node": "^25.4.0",
     "@types/react": "^19.2.14",
