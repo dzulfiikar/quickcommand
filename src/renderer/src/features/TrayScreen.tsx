@@ -5,6 +5,7 @@ import {
   substituteParams,
 } from "../../../shared/cursor-placeholder";
 import type { SnippetRecord } from "../../../shared/snippet-model";
+import { AboutPanel } from "../components/AboutPanel";
 import { ParamInputForm } from "../components/ParamInputForm";
 import { SearchBar } from "../components/SearchBar";
 import { SnippetForm } from "../components/SnippetForm";
@@ -13,6 +14,7 @@ import type { ScreenProps } from "./screen-props";
 
 export function TrayScreen(props: ScreenProps) {
   const [paramSnippet, setParamSnippet] = useState<SnippetRecord | null>(null);
+  const [showAbout, setShowAbout] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
 
   function handleInsert(id: string) {
@@ -40,6 +42,16 @@ export function TrayScreen(props: ScreenProps) {
     const finalText = substituteParams(paramSnippet.value, values);
     setParamSnippet(null);
     void props.onInsertText(paramSnippet.id, finalText);
+  }
+
+  if (showAbout) {
+    return (
+      <section className="stack">
+        <div className="panel stack">
+          <AboutPanel onClose={() => setShowAbout(false)} />
+        </div>
+      </section>
+    );
   }
 
   if (paramSnippet) {
@@ -122,6 +134,13 @@ export function TrayScreen(props: ScreenProps) {
             Open Library
           </button>
           <div className="tray-menu__divider" />
+          <button
+            className="tray-menu__item"
+            type="button"
+            onClick={() => setShowAbout(true)}
+          >
+            About
+          </button>
           <button
             className="tray-menu__item tray-menu__item--danger"
             type="button"

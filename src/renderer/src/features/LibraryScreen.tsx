@@ -7,6 +7,7 @@ import {
 import type { SnippetRecord } from "../../../shared/snippet-model";
 import { ParamInputForm } from "../components/ParamInputForm";
 import { SearchBar } from "../components/SearchBar";
+import { AboutPanel } from "../components/AboutPanel";
 import { SettingsPanel } from "../components/SettingsPanel";
 import { SnippetForm } from "../components/SnippetForm";
 import { SnippetList } from "../components/SnippetList";
@@ -109,6 +110,10 @@ export function LibraryScreen(props: ScreenProps) {
             />
           </div>
         ) : null}
+        <div className="panel stack">
+          <h2>About</h2>
+          <AboutPanel />
+        </div>
       </div>
     </section>
   );
