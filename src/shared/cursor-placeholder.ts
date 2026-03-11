@@ -9,6 +9,7 @@ export const CURSOR_PLACEHOLDER = "{cursor}";
  * Matches alphabetic identifiers with underscores, avoids ${shell} variables.
  */
 const PARAM_PATTERN = /(?<!\$)\{([a-zA-Z_][a-zA-Z0-9_]*)\}/g;
+const PARAM_PATTERN_SINGLE = /(?<!\$)\{([a-zA-Z_][a-zA-Z0-9_]*)\}/;
 
 /**
  * Extract unique parameter names from a template string, in order of first appearance.
@@ -32,7 +33,7 @@ export function extractParams(text: string): string[] {
  * Check if a text contains any template parameters.
  */
 export function hasParams(text: string): boolean {
-  return PARAM_PATTERN.test(text);
+  return PARAM_PATTERN_SINGLE.test(text);
 }
 
 /**

@@ -1,3 +1,11 @@
+import { useState } from "react";
+import {
+  extractParams,
+  hasParams,
+  substituteParams,
+} from "../../../shared/cursor-placeholder";
+import type { SnippetRecord } from "../../../shared/snippet-model";
+import { ParamInputForm } from "../components/ParamInputForm";
 import { SearchBar } from "../components/SearchBar";
 import { SettingsPanel } from "../components/SettingsPanel";
 import { SnippetForm } from "../components/SnippetForm";
@@ -5,6 +13,24 @@ import { SnippetList } from "../components/SnippetList";
 import type { ScreenProps } from "./screen-props";
 
 export function LibraryScreen(props: ScreenProps) {
+  const [paramSnippet, setParamSnippet] = useState<SnippetRecord | null>(null);
+
+  function handleInsert(id: string) {
+    const snippet = props.filtered.find((s) => s.id === id);
+    if (snippet && hasParams(snippet.value)) {
+      setParamSnippet(snippet);
+    } else {
+      void props.onInsert(id);
+    }
+  }
+
+  function handleParamSubmit(values: Record<string, string>) {
+    if (!paramSnippet) return;
+    const finalText = substituteParams(paramSnippet.value, values);
+    setParamSnippet(null);
+    void props.onInsertText(paramSnippet.id, finalText);
+  }
+
   return (
     <section className="grid-layout">
       <div className="stack">
@@ -44,7 +70,7 @@ export function LibraryScreen(props: ScreenProps) {
           </div>
           <SnippetList
             snippets={props.filtered}
-            onInsert={props.onInsert}
+            onInsert={handleInsert}
             onEdit={props.editSnippet}
             onRemove={props.onRemove}
           />
@@ -52,15 +78,26 @@ export function LibraryScreen(props: ScreenProps) {
       </div>
 
       <div className="stack">
-        <div className="panel stack">
-          <h2>{props.editingId ? "Edit snippet" : "New snippet"}</h2>
-          <SnippetForm
-            draft={props.draft}
-            onChange={props.onDraftChange}
-            onSubmit={props.onSubmitSnippet}
-            saving={props.saving}
-          />
-        </div>
+        {paramSnippet ? (
+          <div className="panel stack">
+            <ParamInputForm
+              params={extractParams(paramSnippet.value)}
+              snippetTitle={paramSnippet.title}
+              onSubmit={handleParamSubmit}
+              onCancel={() => setParamSnippet(null)}
+            />
+          </div>
+        ) : (
+          <div className="panel stack">
+            <h2>{props.editingId ? "Edit snippet" : "New snippet"}</h2>
+            <SnippetForm
+              draft={props.draft}
+              onChange={props.onDraftChange}
+              onSubmit={props.onSubmitSnippet}
+              saving={props.saving}
+            />
+          </div>
+        )}
         {props.settings ? (
           <div className="panel stack">
             <h2>Settings</h2>
