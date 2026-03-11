@@ -158,14 +158,30 @@ export function App() {
   }
 
   async function insertSnippet(id: string) {
-    const result = await window.quickCommand.snippets.insert(id);
-    handleInsertResult(result);
+    try {
+      const result = await window.quickCommand.snippets.insert(id);
+      handleInsertResult(result);
+    } catch (error) {
+      setState((current) => ({
+        ...current,
+        error:
+          error instanceof Error ? error.message : "Failed to paste snippet.",
+      }));
+    }
     await refresh(state.query);
   }
 
   async function insertSnippetText(id: string, text: string) {
-    const result = await window.quickCommand.snippets.insertText(id, text);
-    handleInsertResult(result);
+    try {
+      const result = await window.quickCommand.snippets.insertText(id, text);
+      handleInsertResult(result);
+    } catch (error) {
+      setState((current) => ({
+        ...current,
+        error:
+          error instanceof Error ? error.message : "Failed to paste snippet.",
+      }));
+    }
     await refresh(state.query);
   }
 

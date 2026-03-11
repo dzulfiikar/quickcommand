@@ -12,6 +12,8 @@
     "build:helper": "bun run scripts/build-helper.ts",
     "package:dir": "bun run build:helper && bun run build && electron-builder --dir",
     "dist": "bun run build:helper && bun run build && electron-builder",
+    "release": "bun run build:helper && bun run build && electron-builder",
+    "version:bump": "bun run scripts/bump-version.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
@@ -44,8 +46,10 @@
     "mac": {
       "category": "public.app-category.productivity",
       "icon": "resources/icons/icon.icns",
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
       "target": [
-        "dir"
+        "dmg",
+        "zip"
       ],
       "extendInfo": {
         "LSUIElement": true
