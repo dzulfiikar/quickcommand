@@ -1,16 +1,40 @@
 import { useState } from "react";
+import {
+  extractParams,
+  hasParams,
+  substituteParams,
+} from "../../../shared/cursor-placeholder";
+import { ParamInputForm } from "../components/ParamInputForm";
 import { SearchBar } from "../components/SearchBar";
 import { SnippetForm } from "../components/SnippetForm";
 import { SnippetList } from "../components/SnippetList";
 import type { ScreenProps } from "./screen-props";
+import type { SnippetRecord } from "../../../shared/snippet-model";
 
 export function PaletteScreen(props: ScreenProps) {
   const [showForm, setShowForm] = useState(false);
+  const [paramSnippet, setParamSnippet] = useState<SnippetRecord | null>(null);
+
+  function handleInsert(id: string) {
+    const snippet = props.filtered.find((s) => s.id === id);
+    if (snippet && hasParams(snippet.value)) {
+      setParamSnippet(snippet);
+    } else {
+      void props.onInsert(id);
+    }
+  }
+
+  function handleParamSubmit(values: Record<string, string>) {
+    if (!paramSnippet) return;
+    const finalText = substituteParams(paramSnippet.value, values);
+    setParamSnippet(null);
+    void props.onInsertText(paramSnippet.id, finalText);
+  }
 
   function handleKeyDown(event: React.KeyboardEvent) {
     if (event.key === "Enter" && event.metaKey && props.filtered.length > 0) {
       event.preventDefault();
-      void props.onInsert(props.filtered[0].id);
+      handleInsert(props.filtered[0].id);
     }
   }
 
@@ -18,6 +42,19 @@ export function PaletteScreen(props: ScreenProps) {
     await props.onSubmitSnippet(event);
     setShowForm(false);
     props.onNewSnippet();
+  }
+
+  if (paramSnippet) {
+    return (
+      <section className="panel stack">
+        <ParamInputForm
+          params={extractParams(paramSnippet.value)}
+          snippetTitle={paramSnippet.title}
+          onSubmit={handleParamSubmit}
+          onCancel={() => setParamSnippet(null)}
+        />
+      </section>
+    );
   }
 
   return (
@@ -64,7 +101,7 @@ export function PaletteScreen(props: ScreenProps) {
           </div>
           <SnippetList
             snippets={props.filtered}
-            onInsert={props.onInsert}
+            onInsert={handleInsert}
             onEdit={props.editSnippet}
             onRemove={props.onRemove}
           />

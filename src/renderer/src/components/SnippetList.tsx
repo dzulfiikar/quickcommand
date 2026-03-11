@@ -3,7 +3,7 @@ import type { SnippetRecord } from "../../../shared/snippet-model";
 
 export const SnippetList = memo(function SnippetList(props: {
   onEdit(snippet: SnippetRecord): void;
-  onInsert(id: string): Promise<void>;
+  onInsert(id: string): void;
   onRemove(id: string): Promise<void>;
   snippets: SnippetRecord[];
 }) {

@@ -47,6 +47,8 @@ const api: QuickCommandAPI = {
       ipcRenderer.invoke(channels.snippetsUpdate, id, input),
     remove: (id) => ipcRenderer.invoke(channels.snippetsRemove, id),
     insert: (id) => ipcRenderer.invoke(channels.snippetsInsert, id),
+    insertText: (id, text) =>
+      ipcRenderer.invoke(channels.snippetsInsertText, id, text),
     importFromDialog: () => ipcRenderer.invoke(channels.snippetsImportDialog),
     exportToDialog: () => ipcRenderer.invoke(channels.snippetsExportDialog),
   },

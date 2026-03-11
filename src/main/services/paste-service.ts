@@ -1,9 +1,6 @@
 import { clipboard } from "electron";
 
-import { parseCursorPlaceholder } from "../../shared/cursor-placeholder";
 import { NativeHelperService } from "./native-helper-service";
-
-export { CURSOR_PLACEHOLDER, parseCursorPlaceholder } from "../../shared/cursor-placeholder";
 
 type ClipboardSnapshot = {
   formats: string[];
@@ -14,19 +11,13 @@ export class PasteService {
   constructor(private readonly helper = new NativeHelperService()) {}
 
   async insertText(text: string, restoreDelayMs: number): Promise<void> {
-    const { cleanText, cursorOffset } = parseCursorPlaceholder(text);
     const snapshot = captureClipboardState();
 
     try {
       clipboard.clear();
-      clipboard.writeText(cleanText);
+      clipboard.writeText(text);
       await delay(70);
       await this.helper.run("paste");
-
-      if (cursorOffset > 0) {
-        await delay(50);
-        await this.helper.run("move-left", String(cursorOffset));
-      }
     } finally {
       await delay(restoreDelayMs);
       restoreClipboardState(snapshot);

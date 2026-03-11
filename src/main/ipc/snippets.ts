@@ -91,6 +91,40 @@ export function registerSnippetHandlers(
     },
   );
 
+  ipcMain.handle(
+    channels.snippetsInsertText,
+    async (_event, id: string, text: string): Promise<InsertResult> => {
+      const settings = await services.settings.get();
+      const trusted = await services.permissions.isAccessibilityTrusted();
+
+      if (!trusted) {
+        return { ok: false, reason: "not_trusted" };
+      }
+
+      const senderWindow = BrowserWindow.fromWebContents(_event.sender);
+      if (senderWindow) {
+        senderWindow.hide();
+      }
+      app.hide();
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
+      try {
+        await services.paste.insertText(text, settings.pasteRestoreDelayMs);
+        await services.snippets.markInserted(id);
+        callbacks.onSnippetsChanged();
+        return { ok: true };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return {
+          ok: false,
+          reason: message.includes("clipboard")
+            ? "clipboard_restore_failed"
+            : "helper_failed",
+        };
+      }
+    },
+  );
+
   ipcMain.handle(channels.snippetsImportDialog, async () => {
     const selected = await dialog.showOpenDialog({
       filters: [{ name: "QuickCommand Export", extensions: ["json"] }],

@@ -638,6 +638,71 @@ label {
   margin: 4px 0;
 }
 
+/* ── Param Input Form ─────────────────────────────────────────── */
+
+.param-form {
+  gap: 12px;
+}
+
+.param-form__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.param-form__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.param-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.param-form__label {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+
+.param-form__input {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.param-form__input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.param-form__input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.param-form__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.param-form__actions .hint {
+  margin: 0;
+  font-size: 0.72rem;
+}
+
 /* ── Responsive ───────────────────────────────────────────────── */
 
 @media (max-width: 880px) {

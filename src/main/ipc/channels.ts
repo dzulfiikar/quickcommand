@@ -12,6 +12,7 @@ export const channels = {
   snippetsExportDialog: "snippets:export-dialog",
   snippetsImportDialog: "snippets:import-dialog",
   snippetsInsert: "snippets:insert",
+  snippetsInsertText: "snippets:insert-text",
   snippetsList: "snippets:list",
   snippetsRemove: "snippets:remove",
   snippetsSearch: "snippets:search",
