@@ -33,4 +33,8 @@ export function registerSettingsHandlers(
   ipcMain.handle(channels.settingsOpenAccessibility, async () =>
     services.permissions.openAccessibilitySettings(),
   );
+
+  ipcMain.handle(channels.settingsPromptAccessibility, async () =>
+    services.permissions.promptAccessibility(),
+  );
 }

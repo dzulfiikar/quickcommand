@@ -7,6 +7,7 @@ export const channels = {
   settingsCheckAccessibility: "settings:check-accessibility",
   settingsGet: "settings:get",
   settingsOpenAccessibility: "settings:open-accessibility-settings",
+  settingsPromptAccessibility: "settings:prompt-accessibility",
   settingsUpdate: "settings:update",
   snippetsCreate: "snippets:create",
   snippetsExportDialog: "snippets:export-dialog",

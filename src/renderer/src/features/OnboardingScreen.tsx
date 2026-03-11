@@ -21,9 +21,16 @@ export function OnboardingScreen(props: ScreenProps) {
           <button
             className="action-button"
             type="button"
+            onClick={() => void props.onAccessibilityPrompt()}
+          >
+            {props.permissionGranted ? "Permission granted ✓" : "Grant Access"}
+          </button>
+          <button
+            className="secondary-button"
+            type="button"
             onClick={() => void props.onAccessibilityOpen()}
           >
-            Open Accessibility settings
+            Open System Settings
           </button>
           <button
             className="secondary-button"

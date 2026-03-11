@@ -8,6 +8,11 @@ export class PermissionsService {
     return result === "true";
   }
 
+  async promptAccessibility(): Promise<boolean> {
+    const result = await this.helper.run("prompt-accessibility");
+    return result === "true";
+  }
+
   async openAccessibilitySettings(): Promise<void> {
     await this.helper.run("open-accessibility-settings");
   }
