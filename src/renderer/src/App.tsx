@@ -101,8 +101,7 @@ export function App() {
 
     pollRef.current = setInterval(async () => {
       try {
-        const granted =
-          await window.quickCommand.settings.checkAccessibility();
+        const granted = await window.quickCommand.settings.checkAccessibility();
         if (granted) {
           setState((current) => ({ ...current, permissionGranted: true }));
           stopPolling();
@@ -250,8 +249,7 @@ export function App() {
   }
 
   async function promptAccessibility() {
-    const granted =
-      await window.quickCommand.settings.promptAccessibility();
+    const granted = await window.quickCommand.settings.promptAccessibility();
     setState((current) => ({ ...current, permissionGranted: granted }));
   }
 
@@ -339,9 +337,7 @@ export function App() {
 
         {!state.permissionGranted && !state.loading && kind !== "onboarding" ? (
           <div className="banner banner-warning">
-            <span>
-              Accessibility access is required to paste snippets.
-            </span>
+            <span>Accessibility access is required to paste snippets.</span>
             <button
               className="banner-action"
               type="button"

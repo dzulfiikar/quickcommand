@@ -16,7 +16,10 @@ export type HelperCommand =
 export class NativeHelperService {
   async run(command: HelperCommand, ...args: string[]): Promise<string> {
     const executable = await resolveHelperPath();
-    const { stdout, stderr } = await execFileAsync(executable, [command, ...args]);
+    const { stdout, stderr } = await execFileAsync(executable, [
+      command,
+      ...args,
+    ]);
 
     if (`${stderr}`.trim().length > 0) {
       throw new Error(`${stderr}`.trim());

@@ -5,9 +5,9 @@ import {
   substituteParams,
 } from "../../../shared/cursor-placeholder";
 import type { SnippetRecord } from "../../../shared/snippet-model";
+import { AboutPanel } from "../components/AboutPanel";
 import { ParamInputForm } from "../components/ParamInputForm";
 import { SearchBar } from "../components/SearchBar";
-import { AboutPanel } from "../components/AboutPanel";
 import { SettingsPanel } from "../components/SettingsPanel";
 import { SnippetForm } from "../components/SnippetForm";
 import { SnippetList } from "../components/SnippetList";
@@ -67,7 +67,9 @@ export function LibraryScreen(props: ScreenProps) {
           </div>
           <div className="section-header">
             <span className="section-header__title">Snippets</span>
-            <span className="section-header__count">{props.filtered.length}</span>
+            <span className="section-header__count">
+              {props.filtered.length}
+            </span>
           </div>
           <SnippetList
             snippets={props.filtered}
