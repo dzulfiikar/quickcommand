@@ -4,14 +4,16 @@ import {
   hasParams,
   substituteParams,
 } from "../../../shared/cursor-placeholder";
+import type { SnippetRecord } from "../../../shared/snippet-model";
 import { ParamInputForm } from "../components/ParamInputForm";
 import { SearchBar } from "../components/SearchBar";
+import { SnippetForm } from "../components/SnippetForm";
 import { SnippetList } from "../components/SnippetList";
 import type { ScreenProps } from "./screen-props";
-import type { SnippetRecord } from "../../../shared/snippet-model";
 
 export function TrayScreen(props: ScreenProps) {
   const [paramSnippet, setParamSnippet] = useState<SnippetRecord | null>(null);
+  const [showEditForm, setShowEditForm] = useState(false);
 
   function handleInsert(id: string) {
     const snippet = props.filtered.find((s) => s.id === id);
@@ -20,6 +22,17 @@ export function TrayScreen(props: ScreenProps) {
     } else {
       void props.onInsert(id);
     }
+  }
+
+  function handleEdit(snippet: SnippetRecord) {
+    props.editSnippet(snippet);
+    setShowEditForm(true);
+  }
+
+  async function handleSubmit(event: React.FormEvent) {
+    await props.onSubmitSnippet(event);
+    setShowEditForm(false);
+    props.onNewSnippet();
   }
 
   function handleParamSubmit(values: Record<string, string>) {
@@ -44,6 +57,36 @@ export function TrayScreen(props: ScreenProps) {
     );
   }
 
+  if (showEditForm) {
+    return (
+      <section className="stack">
+        <div className="panel stack">
+          <div className="toolbar">
+            <span className="form-heading">
+              {props.editingId ? "Edit Snippet" : "New Snippet"}
+            </span>
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => {
+                setShowEditForm(false);
+                props.onNewSnippet();
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+          <SnippetForm
+            draft={props.draft}
+            onChange={props.onDraftChange}
+            onSubmit={handleSubmit}
+            saving={props.saving}
+          />
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="stack">
       <div className="panel stack">
@@ -54,7 +97,7 @@ export function TrayScreen(props: ScreenProps) {
         <SnippetList
           snippets={props.filtered.slice(0, 8)}
           onInsert={handleInsert}
-          onEdit={props.editSnippet}
+          onEdit={handleEdit}
           onRemove={props.onRemove}
         />
       </div>
@@ -65,7 +108,7 @@ export function TrayScreen(props: ScreenProps) {
             type="button"
             onClick={() => {
               props.onNewSnippet();
-              void props.onShowLibrary();
+              setShowEditForm(true);
             }}
           >
             New Snippet
