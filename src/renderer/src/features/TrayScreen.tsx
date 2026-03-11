@@ -95,10 +95,11 @@ export function TrayScreen(props: ScreenProps) {
           placeholder="Search snippets…"
         />
         <SnippetList
-          snippets={props.filtered.slice(0, 8)}
+          snippets={props.filtered}
           onInsert={handleInsert}
           onEdit={handleEdit}
           onRemove={props.onRemove}
+          pageSize={5}
         />
       </div>
       <div className="panel">
