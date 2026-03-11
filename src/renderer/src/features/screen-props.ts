@@ -15,6 +15,7 @@ export type ScreenProps = {
   onExport(): Promise<{ path: string | null }>;
   onImport(): Promise<void>;
   onInsert(id: string): Promise<void>;
+  onInsertText(id: string, text: string): Promise<void>;
   onNewSnippet(): void;
   onQueryChange(query: string): void;
   onQuit(): Promise<void>;

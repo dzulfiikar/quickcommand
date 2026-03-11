@@ -163,6 +163,12 @@ export function App() {
     await refresh(state.query);
   }
 
+  async function insertSnippetText(id: string, text: string) {
+    const result = await window.quickCommand.snippets.insertText(id, text);
+    handleInsertResult(result);
+    await refresh(state.query);
+  }
+
   function editSnippet(snippet: SnippetRecord) {
     setEditingId(snippet.id);
     setDraft({
@@ -213,6 +219,7 @@ export function App() {
         .importFromDialog()
         .then(() => refresh(state.query)),
     onInsert: insertSnippet,
+    onInsertText: insertSnippetText,
     onNewSnippet: newSnippet,
     onQueryChange: (query) => {
       void refresh(query);

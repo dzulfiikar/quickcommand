@@ -18,6 +18,7 @@ export interface QuickCommandAPI {
     update(id: string, input: SnippetInput): Promise<SnippetRecord>;
     remove(id: string): Promise<void>;
     insert(id: string): Promise<InsertResult>;
+    insertText(id: string, text: string): Promise<InsertResult>;
     importFromDialog(): Promise<{ imported: number }>;
     exportToDialog(): Promise<{ path: string | null }>;
   };
