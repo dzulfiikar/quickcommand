@@ -73,6 +73,7 @@ export function LibraryScreen(props: ScreenProps) {
             onInsert={handleInsert}
             onEdit={props.editSnippet}
             onRemove={props.onRemove}
+            pageSize={10}
           />
         </div>
       </div>
