@@ -9,12 +9,13 @@ const execFileAsync = promisify(execFile);
 export type HelperCommand =
   | "check-accessibility"
   | "open-accessibility-settings"
-  | "paste";
+  | "paste"
+  | "move-left";
 
 export class NativeHelperService {
-  async run(command: HelperCommand): Promise<string> {
+  async run(command: HelperCommand, ...args: string[]): Promise<string> {
     const executable = await resolveHelperPath();
-    const { stdout, stderr } = await execFileAsync(executable, [command]);
+    const { stdout, stderr } = await execFileAsync(executable, [command, ...args]);
 
     if (`${stderr}`.trim().length > 0) {
       throw new Error(`${stderr}`.trim());

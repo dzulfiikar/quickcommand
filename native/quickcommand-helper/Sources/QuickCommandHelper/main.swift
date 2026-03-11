@@ -6,6 +6,7 @@ enum HelperFailure: Error, CustomStringConvertible {
   case invalidCommand
   case notTrusted
   case failedToOpenSettings
+  case invalidArgument(String)
 
   var description: String {
     switch self {
@@ -15,12 +16,15 @@ enum HelperFailure: Error, CustomStringConvertible {
       return "Accessibility permission is required"
     case .failedToOpenSettings:
       return "Failed to open Accessibility settings"
+    case .invalidArgument(let detail):
+      return "Invalid argument: \(detail)"
     }
   }
 }
 
 do {
-  let command = CommandLine.arguments.dropFirst().first ?? ""
+  let args = Array(CommandLine.arguments.dropFirst())
+  let command = args.first ?? ""
 
   switch command {
   case "check-accessibility":
@@ -31,6 +35,12 @@ do {
   case "paste":
     try performPaste()
     print("pasted")
+  case "move-left":
+    guard args.count >= 2, let count = Int(args[1]), count > 0 else {
+      throw HelperFailure.invalidArgument("move-left requires a positive integer")
+    }
+    try performMoveLeft(count: count)
+    print("moved")
   default:
     throw HelperFailure.invalidCommand
   }
@@ -83,4 +93,27 @@ func performPaste() throws {
   keyDown.post(tap: .cghidEventTap)
   usleep(12_000)
   keyUp.post(tap: .cghidEventTap)
+}
+
+func performMoveLeft(count: Int) throws {
+  guard AXIsProcessTrusted() else {
+    throw HelperFailure.notTrusted
+  }
+
+  let source = CGEventSource(stateID: .combinedSessionState)
+  let keyCodeLeft: CGKeyCode = 123
+
+  for _ in 0..<count {
+    guard
+      let keyDown = CGEvent(keyboardEventSource: source, virtualKey: keyCodeLeft, keyDown: true),
+      let keyUp = CGEvent(keyboardEventSource: source, virtualKey: keyCodeLeft, keyDown: false)
+    else {
+      throw HelperFailure.invalidCommand
+    }
+
+    keyDown.post(tap: .cghidEventTap)
+    usleep(8_000)
+    keyUp.post(tap: .cghidEventTap)
+    usleep(4_000)
+  }
 }
