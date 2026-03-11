@@ -58,4 +58,3 @@ jobs:
           files: |
             dist/*.dmg
             dist/*.zip
-          fail_on_missing: false
