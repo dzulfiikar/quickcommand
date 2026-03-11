@@ -1,0 +1,648 @@
+/* ── QuickCommand · Deep Precision v3 ──────────────────────────
+   High-contrast · layered depth · usability-first
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  color-scheme: dark;
+  font-family: -apple-system, BlinkMacSystemFont, "Avenir Next", sans-serif;
+  --mono: "SF Mono", ui-monospace, "Cascadia Code", monospace;
+
+  /* Layered surfaces — clear depth hierarchy */
+  --bg: #090B10;
+  --surface: #131620;
+  --surface-raised: #1A1E2A;
+  --surface-hover: #1E2334;
+  --surface-active: #252B3C;
+
+  /* Borders */
+  --border: rgba(148, 163, 184, 0.07);
+  --border-strong: rgba(148, 163, 184, 0.13);
+  --border-highlight: rgba(148, 163, 184, 0.2);
+  --border-focus: rgba(59, 130, 246, 0.55);
+
+  /* High-contrast text */
+  --text: #F1F3F5;
+  --text-secondary: #94A3B8;
+  --text-tertiary: #64748B;
+
+  /* Electric blue accent */
+  --accent: #3B82F6;
+  --accent-hover: #60A5FA;
+  --accent-text: #fff;
+  --accent-dim: rgba(59, 130, 246, 0.1);
+  --accent-glow: 0 0 12px rgba(59, 130, 246, 0.2);
+
+  /* Semantic */
+  --danger: #EF4444;
+  --danger-bg: rgba(239, 68, 68, 0.08);
+  --success: #22C55E;
+  --success-bg: rgba(34, 197, 94, 0.08);
+  --warn: #EAB308;
+  --warn-bg: rgba(234, 179, 8, 0.06);
+
+  /* Dimensions */
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r: 8px;
+  --r-lg: 10px;
+  --r-xl: 12px;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow: 0 2px 6px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.4), 0 16px 40px rgba(0, 0, 0, 0.2);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13.5px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+/* ── Screen shell ─────────────────────────────────────────────── */
+
+.screen {
+  min-height: 100vh;
+}
+
+.ambient {
+  display: none;
+}
+
+.shell {
+  padding: 16px;
+}
+
+/* Titlebar clearance — macOS traffic lights */
+.screen-library .shell,
+.screen-onboarding .shell {
+  padding-top: 40px;
+}
+
+.screen-palette .shell {
+  padding-top: 36px;
+}
+
+/* Drag region */
+.screen-library .hero,
+.screen-onboarding .hero {
+  -webkit-app-region: drag;
+}
+
+.hero button,
+.hero input,
+.hero a,
+.hero span {
+  -webkit-app-region: no-drag;
+}
+
+/* ── Hero / header ────────────────────────────────────────────── */
+
+.screen-palette .hero,
+.screen-tray .hero {
+  display: none;
+}
+
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0;
+}
+
+.hero h1 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 3px 0 0;
+}
+
+.meta {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.meta span {
+  font-size: 11px;
+  color: var(--text-secondary);
+  padding: 3px 8px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+}
+
+/* ── Panels — elevated cards with depth ───────────────────────── */
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-top-color: var(--border-highlight);
+  border-radius: var(--r-lg);
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+
+.panel h2 {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── Layout helpers ───────────────────────────────────────────── */
+
+.stack {
+  display: grid;
+  gap: 12px;
+}
+
+.grid-layout {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.grid-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+/* ── Search field with icon ───────────────────────────────────── */
+
+.search-field {
+  position: relative;
+  flex: 1;
+}
+
+.search-field__icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  pointer-events: none;
+  transition: color 0.15s;
+}
+
+.search-field:focus-within .search-field__icon {
+  color: var(--accent);
+}
+
+.search-field .search {
+  padding-left: 36px;
+}
+
+/* ── Inputs ───────────────────────────────────────────────────── */
+
+.search,
+input,
+textarea {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r);
+  color: var(--text);
+  font-size: 13.5px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.search:focus,
+input:focus,
+textarea:focus {
+  border-color: var(--border-focus);
+  box-shadow: var(--accent-glow);
+}
+
+.search {
+  font-size: 15px;
+  padding: 10px 14px;
+}
+
+textarea {
+  resize: vertical;
+}
+
+label {
+  display: grid;
+  gap: 5px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ── Toolbar ──────────────────────────────────────────────────── */
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.toolbar .search,
+.toolbar .search-field {
+  flex: 1;
+}
+
+/* ── Buttons ──────────────────────────────────────────────────── */
+
+.action-button,
+.secondary-button,
+.ghost-button {
+  border: none;
+  border-radius: var(--r-sm);
+  padding: 7px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s, opacity 0.12s, transform 0.08s;
+  white-space: nowrap;
+}
+
+.action-button:active,
+.secondary-button:active,
+.ghost-button:active {
+  transform: scale(0.97);
+}
+
+.action-button {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.action-button:hover {
+  background: var(--accent-hover);
+}
+
+.action-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+  transform: none;
+}
+
+.secondary-button {
+  background: var(--surface-active);
+  border: 1px solid var(--border-strong);
+  color: var(--text-secondary);
+}
+
+.secondary-button:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+  border-color: var(--border-highlight);
+}
+
+.ghost-button {
+  background: transparent;
+  color: var(--danger);
+  opacity: 0.75;
+}
+
+.ghost-button:hover {
+  opacity: 1;
+  background: var(--danger-bg);
+}
+
+/* Compact paste button — always visible on cards */
+.paste-button {
+  border: none;
+  border-radius: var(--r-sm);
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--accent-dim);
+  color: var(--accent);
+  transition: background 0.12s, color 0.12s;
+  white-space: nowrap;
+}
+
+.paste-button:hover {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+/* ── Banners ──────────────────────────────────────────────────── */
+
+.banner {
+  padding: 10px 14px;
+  border-radius: var(--r);
+  font-size: 12.5px;
+  margin-bottom: 12px;
+}
+
+.banner-error {
+  background: var(--danger-bg);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  color: #FCA5A5;
+}
+
+.banner-warning {
+  background: var(--warn-bg);
+  border: 1px solid rgba(234, 179, 8, 0.15);
+  color: #FCD34D;
+}
+
+.banner-action {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 4px 10px;
+  border-radius: var(--r-xs);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: rgba(239, 68, 68, 0.08);
+  color: #FCA5A5;
+  cursor: pointer;
+  font-size: 11.5px;
+  font-weight: 500;
+  transition: background 0.12s;
+}
+
+.banner-action:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+/* ── Snippet list ─────────────────────────────────────────────── */
+
+.snippet-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.snippet-card {
+  padding: 10px 12px;
+  border-radius: var(--r);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  transition: background 0.1s, border-color 0.1s, box-shadow 0.1s;
+}
+
+.snippet-card:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.snippet-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.snippet-card__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.snippet-card h3 {
+  font-size: 13.5px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.snippet-card p {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+  margin: 3px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.snippet-card__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.snippet-card__meta {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-family: var(--mono);
+}
+
+/* Old pill-row — kept for backwards compat */
+.pill-row {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.pill {
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  padding: 2px 7px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+}
+
+.snippet-card__secondary {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+/* Legacy toolbar — also always visible */
+.snippet-card .toolbar {
+  margin-top: 6px;
+}
+
+/* ── Keyboard hint ────────────────────────────────────────────── */
+
+.hint {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  padding: 2px 0;
+  letter-spacing: 0.01em;
+}
+
+.kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin: 0 1px;
+}
+
+/* ── Section header ───────────────────────────────────────────── */
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px;
+}
+
+.section-header__title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.section-header__count {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-family: var(--mono);
+}
+
+/* ── Form ─────────────────────────────────────────────────────── */
+
+.form-heading {
+  flex: 1;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ── Settings ─────────────────────────────────────────────────── */
+
+.settings-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.checkbox input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+}
+
+/* ── Status ───────────────────────────────────────────────────── */
+
+.status {
+  color: var(--text-secondary);
+  font-size: 12.5px;
+}
+
+.status.good {
+  color: var(--success);
+}
+
+.status.bad {
+  color: var(--danger);
+}
+
+/* ── Empty state ──────────────────────────────────────────────── */
+
+.empty-state {
+  padding: 28px 20px;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 13px;
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.empty-state strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text-secondary);
+  font-size: 13.5px;
+}
+
+/* ── Tray popover menu ─────────────────────────────────────────── */
+
+.tray-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tray-menu__item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 7px 10px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.tray-menu__item:hover {
+  background: var(--surface-hover);
+}
+
+.tray-menu__item--danger {
+  color: var(--danger);
+}
+
+.tray-menu__item--danger:hover {
+  background: var(--danger-bg);
+}
+
+.tray-menu__divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+/* ── Responsive ───────────────────────────────────────────────── */
+
+@media (max-width: 880px) {
+  .grid-layout,
+  .grid-two {
+    grid-template-columns: 1fr;
+  }
+}

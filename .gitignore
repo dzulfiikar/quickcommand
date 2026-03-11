@@ -1,0 +1,8 @@
+node_modules
+out
+dist
+dist-native
+.DS_Store
+.worktrees
+worktrees
+docs
