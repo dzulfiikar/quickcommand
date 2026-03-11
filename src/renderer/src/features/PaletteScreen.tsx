@@ -4,12 +4,12 @@ import {
   hasParams,
   substituteParams,
 } from "../../../shared/cursor-placeholder";
+import type { SnippetRecord } from "../../../shared/snippet-model";
 import { ParamInputForm } from "../components/ParamInputForm";
 import { SearchBar } from "../components/SearchBar";
 import { SnippetForm } from "../components/SnippetForm";
 import { SnippetList } from "../components/SnippetList";
 import type { ScreenProps } from "./screen-props";
-import type { SnippetRecord } from "../../../shared/snippet-model";
 
 export function PaletteScreen(props: ScreenProps) {
   const [showForm, setShowForm] = useState(false);
@@ -107,7 +107,8 @@ export function PaletteScreen(props: ScreenProps) {
           />
           {props.filtered.length > 0 && (
             <p className="hint">
-              <kbd className="kbd">⌘↵</kbd> paste top result · <kbd className="kbd">Esc</kbd> dismiss
+              <kbd className="kbd">⌘↵</kbd> paste top result ·{" "}
+              <kbd className="kbd">Esc</kbd> dismiss
             </p>
           )}
         </>

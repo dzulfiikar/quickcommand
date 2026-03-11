@@ -1,5 +1,5 @@
 import { readFile, writeFile } from "node:fs/promises";
-import { BrowserWindow, app, dialog, ipcMain } from "electron";
+import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import type { InsertResult } from "../../shared/app-api";
 import {
   exportBundleSchema,

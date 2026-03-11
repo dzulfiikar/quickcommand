@@ -18,9 +18,9 @@ describe("extractParams", () => {
   });
 
   it("extracts multiple unique params in order", () => {
-    expect(
-      extractParams("curl -X {method} {url} -H 'Bearer {token}'"),
-    ).toEqual(["method", "url", "token"]);
+    expect(extractParams("curl -X {method} {url} -H 'Bearer {token}'")).toEqual(
+      ["method", "url", "token"],
+    );
   });
 
   it("deduplicates repeated params", () => {
