@@ -10,6 +10,7 @@ export type ScreenProps = {
   editingId: string | null;
   filtered: SnippetRecord[];
   onAccessibilityOpen(): Promise<void>;
+  onAccessibilityPrompt(): Promise<void>;
   onCompleteOnboarding(): Promise<void>;
   onDraftChange(value: SnippetInput): void;
   onExport(): Promise<{ path: string | null }>;

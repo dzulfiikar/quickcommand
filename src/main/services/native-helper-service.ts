@@ -10,7 +10,8 @@ export type HelperCommand =
   | "check-accessibility"
   | "open-accessibility-settings"
   | "paste"
-  | "move-left";
+  | "move-left"
+  | "prompt-accessibility";
 
 export class NativeHelperService {
   async run(command: HelperCommand, ...args: string[]): Promise<string> {

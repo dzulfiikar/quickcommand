@@ -29,6 +29,10 @@ do {
   switch command {
   case "check-accessibility":
     print(AXIsProcessTrusted() ? "true" : "false")
+  case "prompt-accessibility":
+    let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
+    let trusted = AXIsProcessTrustedWithOptions(options)
+    print(trusted ? "true" : "false")
   case "open-accessibility-settings":
     try openAccessibilitySettings()
     print("opened")

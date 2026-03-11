@@ -59,6 +59,8 @@ const api: QuickCommandAPI = {
       ipcRenderer.invoke(channels.settingsCheckAccessibility),
     openAccessibilitySettings: () =>
       ipcRenderer.invoke(channels.settingsOpenAccessibility),
+    promptAccessibility: () =>
+      ipcRenderer.invoke(channels.settingsPromptAccessibility),
   },
   app: {
     showLibrary: () => ipcRenderer.invoke(channels.appShowLibrary),

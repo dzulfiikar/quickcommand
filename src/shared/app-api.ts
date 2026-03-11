@@ -27,6 +27,7 @@ export interface QuickCommandAPI {
     update(patch: Partial<Settings>): Promise<Settings>;
     checkAccessibility(): Promise<boolean>;
     openAccessibilitySettings(): Promise<void>;
+    promptAccessibility(): Promise<boolean>;
   };
   app: {
     showLibrary(): Promise<void>;

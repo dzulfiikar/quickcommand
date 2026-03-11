@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { InsertResult } from "../../shared/app-api";
 import type { Settings } from "../../shared/settings-model";
 import type { SnippetInput, SnippetRecord } from "../../shared/snippet-model";
@@ -81,6 +81,39 @@ export function App() {
       return () => window.removeEventListener("keydown", handler);
     }
   }, [kind]);
+
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopPolling = useCallback(() => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (state.permissionGranted) {
+      stopPolling();
+      return;
+    }
+
+    if (state.loading) return;
+
+    pollRef.current = setInterval(async () => {
+      try {
+        const granted =
+          await window.quickCommand.settings.checkAccessibility();
+        if (granted) {
+          setState((current) => ({ ...current, permissionGranted: true }));
+          stopPolling();
+        }
+      } catch {
+        // ignore polling errors
+      }
+    }, 3000);
+
+    return stopPolling;
+  }, [state.permissionGranted, state.loading, stopPolling]);
 
   const filtered = state.snippets;
 
@@ -216,6 +249,12 @@ export function App() {
     window.close();
   }
 
+  async function promptAccessibility() {
+    const granted =
+      await window.quickCommand.settings.promptAccessibility();
+    setState((current) => ({ ...current, permissionGranted: granted }));
+  }
+
   function newSnippet() {
     setEditingId(null);
     setDraft(emptySnippet);
@@ -228,6 +267,7 @@ export function App() {
     filtered,
     onAccessibilityOpen: () =>
       window.quickCommand.settings.openAccessibilitySettings(),
+    onAccessibilityPrompt: promptAccessibility,
     onCompleteOnboarding: completeOnboarding,
     onDraftChange: setDraft,
     onImport: () =>
@@ -289,13 +329,26 @@ export function App() {
               <button
                 className="banner-action"
                 type="button"
-                onClick={() =>
-                  void window.quickCommand.settings.openAccessibilitySettings()
-                }
+                onClick={() => void promptAccessibility()}
               >
-                Open Accessibility Settings
+                Grant Access
               </button>
             ) : null}
+          </div>
+        ) : null}
+
+        {!state.permissionGranted && !state.loading && kind !== "onboarding" ? (
+          <div className="banner banner-warning">
+            <span>
+              Accessibility access is required to paste snippets.
+            </span>
+            <button
+              className="banner-action"
+              type="button"
+              onClick={() => void promptAccessibility()}
+            >
+              Grant Access
+            </button>
           </div>
         ) : null}
         {hotkeyWarning ? (
