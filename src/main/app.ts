@@ -320,8 +320,10 @@ function attachWindowDiagnostics(
   window.webContents.on("did-fail-load", failHandler);
 
   window.once("closed", () => {
-    window.webContents.removeListener("console-message", consoleHandler);
-    window.webContents.removeListener("did-fail-load", failHandler);
+    if (!window.isDestroyed()) {
+      window.webContents.removeListener("console-message", consoleHandler);
+      window.webContents.removeListener("did-fail-load", failHandler);
+    }
   });
 }
 

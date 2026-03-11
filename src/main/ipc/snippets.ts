@@ -48,30 +48,30 @@ export function registerSnippetHandlers(
   ipcMain.handle(
     channels.snippetsInsert,
     async (_event, id: string): Promise<InsertResult> => {
-      const settings = await services.settings.get();
-      const trusted = await services.permissions.isAccessibilityTrusted();
-
-      if (!trusted) {
-        return { ok: false, reason: "not_trusted" };
-      }
-
-      const snippets = await services.snippets.list();
-      const snippet = snippets.find((item) => item.id === id);
-
-      if (!snippet) {
-        throw new Error(`Snippet not found: ${id}`);
-      }
-
-      // Hide the calling window before paste so the previously focused app receives Cmd+V
-      const senderWindow = BrowserWindow.fromWebContents(_event.sender);
-      if (senderWindow) {
-        senderWindow.hide();
-      }
-      // Deactivate the entire Electron app so macOS restores focus to the previous application
-      app.hide();
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
       try {
+        const settings = await services.settings.get();
+        const trusted = await services.permissions.isAccessibilityTrusted();
+
+        if (!trusted) {
+          return { ok: false, reason: "not_trusted" };
+        }
+
+        const snippets = await services.snippets.list();
+        const snippet = snippets.find((item) => item.id === id);
+
+        if (!snippet) {
+          throw new Error(`Snippet not found: ${id}`);
+        }
+
+        // Hide the calling window before paste so the previously focused app receives Cmd+V
+        const senderWindow = BrowserWindow.fromWebContents(_event.sender);
+        if (senderWindow) {
+          senderWindow.hide();
+        }
+        // Deactivate the entire Electron app so macOS restores focus to the previous application
+        app.hide();
+        await new Promise((resolve) => setTimeout(resolve, 200));
+
         await services.paste.insertText(
           snippet.value,
           settings.pasteRestoreDelayMs,
@@ -94,21 +94,21 @@ export function registerSnippetHandlers(
   ipcMain.handle(
     channels.snippetsInsertText,
     async (_event, id: string, text: string): Promise<InsertResult> => {
-      const settings = await services.settings.get();
-      const trusted = await services.permissions.isAccessibilityTrusted();
-
-      if (!trusted) {
-        return { ok: false, reason: "not_trusted" };
-      }
-
-      const senderWindow = BrowserWindow.fromWebContents(_event.sender);
-      if (senderWindow) {
-        senderWindow.hide();
-      }
-      app.hide();
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
       try {
+        const settings = await services.settings.get();
+        const trusted = await services.permissions.isAccessibilityTrusted();
+
+        if (!trusted) {
+          return { ok: false, reason: "not_trusted" };
+        }
+
+        const senderWindow = BrowserWindow.fromWebContents(_event.sender);
+        if (senderWindow) {
+          senderWindow.hide();
+        }
+        app.hide();
+        await new Promise((resolve) => setTimeout(resolve, 200));
+
         await services.paste.insertText(text, settings.pasteRestoreDelayMs);
         await services.snippets.markInserted(id);
         callbacks.onSnippetsChanged();
