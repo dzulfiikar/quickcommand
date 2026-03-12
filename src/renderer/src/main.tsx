@@ -4,8 +4,8 @@ import ReactDOM from "react-dom/client";
 import "./styles.css";
 
 async function boot() {
-  // In browser (non-Electron), load mock preload API
-  if (!window.quickCommand) {
+  // In browser (non-Electron), load mock preload API for development only
+  if (!window.quickCommand && import.meta.env.DEV) {
     await import("./mock-preload");
   }
 
