@@ -4,6 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+/** Convert snake_case/camelCase param names to readable labels */
+function humanize(name: string): string {
+  return name
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export const ParamInputForm = memo(function ParamInputForm(props: {
   params: string[];
   snippetTitle: string;
@@ -49,13 +57,18 @@ export const ParamInputForm = memo(function ParamInputForm(props: {
       onKeyDown={handleKeyDown}
     >
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-foreground">
-          {props.snippetTitle}
-        </h3>
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">
+            {props.snippetTitle}
+          </h3>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            Fill in the parameters below
+          </p>
+        </div>
         <Button
-          variant="secondary"
+          variant="ghost"
           size="sm"
-          className="h-7 text-xs"
+          className="h-7 text-xs text-muted-foreground"
           type="button"
           onClick={props.onCancel}
         >
@@ -65,14 +78,14 @@ export const ParamInputForm = memo(function ParamInputForm(props: {
       <div className="flex flex-col gap-3">
         {props.params.map((name, i) => (
           <div key={name} className="space-y-1.5">
-            <Label className="font-mono text-xs text-primary">
-              {`{${name}}`}
+            <Label className="text-xs font-medium text-foreground/80">
+              {humanize(name)}
             </Label>
             <Input
               ref={i === 0 ? firstRef : undefined}
-              className="h-9 font-mono text-[13px] bg-background/50 border-border/60"
+              className="h-9 text-[13px] bg-background/50 border-border/60"
               type="text"
-              placeholder={name}
+              placeholder={`Enter ${humanize(name).toLowerCase()}…`}
               value={values[name]}
               onChange={(e) => handleChange(name, e.target.value)}
             />
@@ -82,18 +95,16 @@ export const ParamInputForm = memo(function ParamInputForm(props: {
       <div className="flex items-center gap-3 pt-1">
         <Button
           size="sm"
-          className="gap-1.5"
+          className="gap-1.5 pressable"
           type="submit"
           disabled={!allFilled}
         >
           <ClipboardPaste className="h-3.5 w-3.5" />
           Paste
         </Button>
-        <span className="text-[11px] text-muted-foreground/60">
-          Fill in all parameters, then press{" "}
-          <kbd className="inline-block px-1.5 py-0.5 rounded bg-muted border border-border/60 font-mono text-[10px] text-muted-foreground">
-            ↵
-          </kbd>{" "}
+        <span className="text-[11px] text-muted-foreground">
+          Press{" "}
+          <kbd className="kbd">↵</kbd>{" "}
           to paste
         </span>
       </div>
