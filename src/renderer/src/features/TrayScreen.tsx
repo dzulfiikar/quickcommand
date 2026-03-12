@@ -66,7 +66,7 @@ export function TrayScreen(props: ScreenProps) {
 
   if (showAbout) {
     return (
-      <motion.div variants={fadeIn} initial="hidden" animate="visible" className="glass p-4">
+      <motion.div variants={fadeIn} initial="hidden" animate="visible" className="glass p-4 overflow-y-auto">
         <AboutPanel onClose={() => setShowAbout(false)} />
       </motion.div>
     );
@@ -74,7 +74,7 @@ export function TrayScreen(props: ScreenProps) {
 
   if (paramSnippet) {
     return (
-      <motion.div variants={fadeIn} initial="hidden" animate="visible" className="glass p-4">
+      <motion.div variants={fadeIn} initial="hidden" animate="visible" className="glass p-4 overflow-y-auto">
         <ParamInputForm
           params={extractParams(paramSnippet.value)}
           snippetTitle={paramSnippet.title}
@@ -87,7 +87,7 @@ export function TrayScreen(props: ScreenProps) {
 
   if (showEditForm) {
     return (
-      <motion.div variants={fadeIn} initial="hidden" animate="visible" className="glass p-4 flex flex-col gap-3">
+      <motion.div variants={fadeIn} initial="hidden" animate="visible" className="glass p-4 flex flex-col gap-3 overflow-y-auto">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-foreground">
             {props.editingId ? "Edit Snippet" : "New Snippet"}
@@ -117,7 +117,7 @@ export function TrayScreen(props: ScreenProps) {
   const visibleSnippets = props.filtered.slice(0, 6);
 
   return (
-    <motion.div variants={fadeIn} initial="hidden" animate="visible" className="glass overflow-hidden">
+    <motion.div variants={fadeIn} initial="hidden" animate="visible" className="glass overflow-y-auto">
       {/* Search */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border/30">
         <Search className="h-4 w-4 text-muted-foreground/50 shrink-0" />

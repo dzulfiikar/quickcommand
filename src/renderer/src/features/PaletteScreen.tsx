@@ -88,7 +88,7 @@ export function PaletteScreen(props: ScreenProps) {
         variants={fadeIn}
         initial="hidden"
         animate="visible"
-        className="glass p-5"
+        className="glass p-5 overflow-y-auto"
       >
         <ParamInputForm
           params={extractParams(paramSnippet.value)}
@@ -105,7 +105,7 @@ export function PaletteScreen(props: ScreenProps) {
       variants={fadeIn}
       initial="hidden"
       animate="visible"
-      className="glass overflow-hidden"
+      className="glass overflow-y-auto"
       onKeyDown={handleKeyDown}
     >
       <AnimatePresence mode="wait">

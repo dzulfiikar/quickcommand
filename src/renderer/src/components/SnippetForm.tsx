@@ -119,7 +119,7 @@ export const SnippetForm = memo(function SnippetForm(props: {
           ref={textareaRef}
           placeholder="e.g. git commit --amend --no-edit"
           rows={4}
-          className={`bg-background/50 font-mono text-[13px] resize-y ${
+          className={`bg-background/50 font-mono text-[13px] resize-y max-h-[200px] overflow-y-auto ${
             valueError
               ? "border-destructive/50 focus-visible:ring-destructive/30"
               : "border-border/60"
