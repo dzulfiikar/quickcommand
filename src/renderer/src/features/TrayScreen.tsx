@@ -1,4 +1,17 @@
-import { useState } from "react";
+import { motion } from "framer-motion";
+import {
+  ClipboardPaste,
+  Info,
+  Library,
+  LogOut,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { fadeIn } from "@/lib/motion";
 import {
   extractParams,
   hasParams,
@@ -7,15 +20,22 @@ import {
 import type { SnippetRecord } from "../../../shared/snippet-model";
 import { AboutPanel } from "../components/AboutPanel";
 import { ParamInputForm } from "../components/ParamInputForm";
-import { SearchBar } from "../components/SearchBar";
 import { SnippetForm } from "../components/SnippetForm";
-import { SnippetList } from "../components/SnippetList";
 import type { ScreenProps } from "./screen-props";
 
 export function TrayScreen(props: ScreenProps) {
   const [paramSnippet, setParamSnippet] = useState<SnippetRecord | null>(null);
   const [showAbout, setShowAbout] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      props.onQueryChange(query);
+    }, 120);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
 
   function handleInsert(id: string) {
     const snippet = props.filtered.find((s) => s.id === id);
@@ -46,110 +66,186 @@ export function TrayScreen(props: ScreenProps) {
 
   if (showAbout) {
     return (
-      <section className="stack">
-        <div className="panel stack">
-          <AboutPanel onClose={() => setShowAbout(false)} />
-        </div>
-      </section>
+      <motion.div variants={fadeIn} initial="hidden" animate="visible" className="glass p-4">
+        <AboutPanel onClose={() => setShowAbout(false)} />
+      </motion.div>
     );
   }
 
   if (paramSnippet) {
     return (
-      <section className="stack">
-        <div className="panel stack">
-          <ParamInputForm
-            params={extractParams(paramSnippet.value)}
-            snippetTitle={paramSnippet.title}
-            onSubmit={handleParamSubmit}
-            onCancel={() => setParamSnippet(null)}
-          />
-        </div>
-      </section>
+      <motion.div variants={fadeIn} initial="hidden" animate="visible" className="glass p-4">
+        <ParamInputForm
+          params={extractParams(paramSnippet.value)}
+          snippetTitle={paramSnippet.title}
+          onSubmit={handleParamSubmit}
+          onCancel={() => setParamSnippet(null)}
+        />
+      </motion.div>
     );
   }
 
   if (showEditForm) {
     return (
-      <section className="stack">
-        <div className="panel stack">
-          <div className="toolbar">
-            <span className="form-heading">
-              {props.editingId ? "Edit Snippet" : "New Snippet"}
-            </span>
-            <button
-              className="secondary-button"
-              type="button"
-              onClick={() => {
-                setShowEditForm(false);
-                props.onNewSnippet();
-              }}
-            >
-              Cancel
-            </button>
-          </div>
-          <SnippetForm
-            draft={props.draft}
-            onChange={props.onDraftChange}
-            onSubmit={handleSubmit}
-            saving={props.saving}
-          />
+      <motion.div variants={fadeIn} initial="hidden" animate="visible" className="glass p-4 flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-foreground">
+            {props.editingId ? "Edit Snippet" : "New Snippet"}
+          </h3>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs text-muted-foreground"
+            onClick={() => {
+              setShowEditForm(false);
+              props.onNewSnippet();
+            }}
+          >
+            Cancel
+          </Button>
         </div>
-      </section>
+        <SnippetForm
+          draft={props.draft}
+          onChange={props.onDraftChange}
+          onSubmit={handleSubmit}
+          saving={props.saving}
+        />
+      </motion.div>
     );
   }
 
+  const visibleSnippets = props.filtered.slice(0, 6);
+
   return (
-    <section className="stack">
-      <div className="panel stack">
-        <SearchBar
-          onQueryChange={props.onQueryChange}
-          placeholder="Search snippets…"
-        />
-        <SnippetList
-          snippets={props.filtered}
-          onInsert={handleInsert}
-          onEdit={handleEdit}
-          onRemove={props.onRemove}
-          pageSize={5}
+    <motion.div variants={fadeIn} initial="hidden" animate="visible" className="glass overflow-hidden">
+      {/* Search */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-border/30">
+        <Search className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+        <input
+          autoFocus
+          className="flex-1 bg-transparent text-[14px] text-foreground placeholder:text-muted-foreground/60 outline-none"
+          placeholder="Search…"
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
         />
       </div>
-      <div className="panel">
-        <div className="tray-menu">
-          <button
-            className="tray-menu__item"
-            type="button"
-            onClick={() => {
-              props.onNewSnippet();
-              setShowEditForm(true);
-            }}
-          >
-            New Snippet
-          </button>
-          <button
-            className="tray-menu__item"
-            type="button"
-            onClick={() => void props.onShowLibrary()}
-          >
-            Open Library
-          </button>
-          <div className="tray-menu__divider" />
-          <button
-            className="tray-menu__item"
-            type="button"
-            onClick={() => setShowAbout(true)}
-          >
-            About
-          </button>
-          <button
-            className="tray-menu__item tray-menu__item--danger"
-            type="button"
-            onClick={() => void props.onQuit()}
-          >
-            Quit QuickCommand
-          </button>
+
+      {/* Snippet list */}
+      {visibleSnippets.length > 0 && (
+        <div className="py-1">
+          <div className="px-4 py-1.5">
+            <span className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-widest">
+              Snippets
+            </span>
+          </div>
+          {visibleSnippets.map((snippet) => (
+            <div
+              key={snippet.id}
+              className="group pressable flex items-center gap-3 px-4 py-2 hover:bg-accent/30 transition-colors"
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-medium text-foreground leading-tight truncate">
+                  {snippet.title}
+                </p>
+                <p className="text-[10.5px] font-mono text-foreground/50 mt-0.5 truncate">
+                  {snippet.value}
+                </p>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                {snippet.useCount > 0 && (
+                  <span className="text-[10px] font-mono text-muted-foreground/50 tabular-nums mr-1">
+                    {snippet.useCount}×
+                  </span>
+                )}
+                <button
+                  type="button"
+                  className="p-1 rounded hover:bg-accent/50 text-muted-foreground/70 hover:text-foreground transition-colors opacity-0 group-hover:opacity-100"
+                  onClick={() => handleEdit(snippet)}
+                  title="Edit"
+                >
+                  <Pencil className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  className="p-1 rounded hover:bg-destructive/10 text-muted-foreground/70 hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                  onClick={() => void props.onRemove(snippet.id)}
+                  title="Delete"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  className="pressable ml-0.5 px-2 py-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary text-[11px] font-medium transition-colors flex items-center gap-1"
+                  onClick={() => handleInsert(snippet.id)}
+                >
+                  <ClipboardPaste className="h-3 w-3" />
+                  Paste
+                </button>
+              </div>
+            </div>
+          ))}
+          {props.filtered.length > 6 && (
+            <div className="px-4 py-1.5 text-center">
+              <span className="text-[10.5px] text-muted-foreground/50">
+                +{props.filtered.length - 6} more
+              </span>
+            </div>
+          )}
         </div>
+      )}
+
+      {visibleSnippets.length === 0 && (
+        <div className="py-8 text-center">
+          <p className="text-[12.5px] text-muted-foreground/60">
+            {query ? "No matches" : "No snippets yet"}
+          </p>
+        </div>
+      )}
+
+      {/* Actions footer */}
+      <div className="border-t border-border/30 py-1">
+        <div className="px-4 py-1.5">
+          <span className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-widest">
+            Actions
+          </span>
+        </div>
+        <button
+          className="pressable flex items-center gap-2.5 w-full text-left px-4 py-2 text-[13px] font-medium text-foreground hover:bg-accent/30 transition-colors"
+          type="button"
+          onClick={() => {
+            props.onNewSnippet();
+            setShowEditForm(true);
+          }}
+        >
+          <Plus className="h-3.5 w-3.5 text-primary/60" />
+          New Snippet
+        </button>
+        <button
+          className="pressable flex items-center gap-2.5 w-full text-left px-4 py-2 text-[13px] font-medium text-foreground hover:bg-accent/30 transition-colors"
+          type="button"
+          onClick={() => void props.onShowLibrary()}
+        >
+          <Library className="h-3.5 w-3.5 text-muted-foreground/60" />
+          Open Library
+        </button>
+        <button
+          className="pressable flex items-center gap-2.5 w-full text-left px-4 py-2 text-[13px] font-medium text-foreground hover:bg-accent/30 transition-colors"
+          type="button"
+          onClick={() => setShowAbout(true)}
+        >
+          <Info className="h-3.5 w-3.5 text-muted-foreground/60" />
+          About
+        </button>
+        <button
+          className="pressable flex items-center gap-2.5 w-full text-left px-4 py-2 text-[13px] font-medium text-destructive/70 hover:bg-destructive/5 transition-colors"
+          type="button"
+          onClick={() => void props.onQuit()}
+        >
+          <LogOut className="h-3.5 w-3.5" />
+          Quit
+        </button>
       </div>
-    </section>
+    </motion.div>
   );
 }

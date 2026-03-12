@@ -1,8 +1,12 @@
+import { Search } from "lucide-react";
 import { memo, useEffect, useState } from "react";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 export const SearchBar = memo(function SearchBar(props: {
   onQueryChange(query: string): void;
   placeholder: string;
+  className?: string;
 }) {
   const [value, setValue] = useState("");
 
@@ -11,35 +15,14 @@ export const SearchBar = memo(function SearchBar(props: {
       props.onQueryChange(value);
     }, 150);
     return () => clearTimeout(timer);
-  }, [value]);
+  }, [value, props.onQueryChange]);
 
   return (
-    <div className="search-field">
-      <svg
-        className="search-field__icon"
-        width="15"
-        height="15"
-        viewBox="0 0 16 16"
-        fill="none"
-        aria-hidden="true"
-      >
-        <circle
-          cx="6.5"
-          cy="6.5"
-          r="4.5"
-          stroke="currentColor"
-          strokeWidth="1.5"
-        />
-        <path
-          d="M10 10L14 14"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-      </svg>
-      <input
+    <div className={cn("relative flex-1", props.className)}>
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none transition-colors" />
+      <Input
         autoFocus
-        className="search"
+        className="pl-9 h-10 bg-background/50 border-border/60 text-[15px] placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-ring/40"
         placeholder={props.placeholder}
         type="search"
         value={value}

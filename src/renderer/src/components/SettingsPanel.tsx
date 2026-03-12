@@ -1,4 +1,8 @@
 import { memo, useEffect, useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import type { Settings } from "../../../shared/settings-model";
 
 export const SettingsPanel = memo(function SettingsPanel(props: {
@@ -20,45 +24,52 @@ export const SettingsPanel = memo(function SettingsPanel(props: {
       }
     }, 400);
     return () => clearTimeout(timer);
-  }, [shortcut]);
+  }, [shortcut, props.onSaveSettings, props.settings.globalShortcut]);
 
   return (
-    <div className="settings-grid">
-      <label>
-        <span>Global shortcut</span>
-        <input
+    <div className="flex flex-col gap-4">
+      <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground">Global shortcut</Label>
+        <Input
+          className="h-9 bg-background/50 border-border/60 font-mono text-[13px]"
           value={shortcut}
           onChange={(event) => setShortcut(event.target.value)}
         />
-      </label>
+      </div>
       {props.showClipboardDelay ? (
-        <label>
-          <span>Clipboard restore delay (ms)</span>
-          <input
-            min={0}
-            step={10}
-            type="number"
-            value={props.settings.pasteRestoreDelayMs}
-            onChange={(event) =>
-              void props.onSaveSettings({
-                pasteRestoreDelayMs: Number(event.target.value),
-              })
-            }
-          />
-        </label>
+        <>
+          <Separator className="bg-border/40" />
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">
+              Clipboard restore delay (ms)
+            </Label>
+            <Input
+              className="h-9 bg-background/50 border-border/60 font-mono text-[13px]"
+              min={0}
+              step={10}
+              type="number"
+              value={props.settings.pasteRestoreDelayMs}
+              onChange={(event) =>
+                void props.onSaveSettings({
+                  pasteRestoreDelayMs: Number(event.target.value),
+                })
+              }
+            />
+          </div>
+        </>
       ) : null}
-      <label className="checkbox">
-        <input
+      <Separator className="bg-border/40" />
+      <div className="flex items-center justify-between">
+        <Label className="text-sm text-foreground cursor-pointer">
+          Launch at login
+        </Label>
+        <Switch
           checked={props.settings.launchAtLogin}
-          type="checkbox"
-          onChange={(event) =>
-            void props.onSaveSettings({
-              launchAtLogin: event.target.checked,
-            })
+          onCheckedChange={(checked) =>
+            void props.onSaveSettings({ launchAtLogin: checked })
           }
         />
-        <span>Launch at login</span>
-      </label>
+      </div>
     </div>
   );
 });

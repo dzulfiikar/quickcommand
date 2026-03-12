@@ -1,4 +1,8 @@
+import { ClipboardPaste } from "lucide-react";
 import { memo, useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export const ParamInputForm = memo(function ParamInputForm(props: {
   params: string[];
@@ -40,42 +44,57 @@ export const ParamInputForm = memo(function ParamInputForm(props: {
 
   return (
     <form
-      className="param-form stack"
+      className="flex flex-col gap-4"
       onSubmit={handleSubmit}
       onKeyDown={handleKeyDown}
     >
-      <div className="param-form__header">
-        <span className="form-heading">{props.snippetTitle}</span>
-        <button
-          className="secondary-button"
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-foreground">
+          {props.snippetTitle}
+        </h3>
+        <Button
+          variant="secondary"
+          size="sm"
+          className="h-7 text-xs"
           type="button"
           onClick={props.onCancel}
         >
           Cancel
-        </button>
+        </Button>
       </div>
-      <div className="param-form__fields">
+      <div className="flex flex-col gap-3">
         {props.params.map((name, i) => (
-          <label key={name} className="param-form__field">
-            <span className="param-form__label">{`{${name}}`}</span>
-            <input
+          <div key={name} className="space-y-1.5">
+            <Label className="font-mono text-xs text-primary">
+              {`{${name}}`}
+            </Label>
+            <Input
               ref={i === 0 ? firstRef : undefined}
-              className="param-form__input"
+              className="h-9 font-mono text-[13px] bg-background/50 border-border/60"
               type="text"
               placeholder={name}
               value={values[name]}
               onChange={(e) => handleChange(name, e.target.value)}
             />
-          </label>
+          </div>
         ))}
       </div>
-      <div className="param-form__actions">
-        <button className="paste-button" type="submit" disabled={!allFilled}>
-          Paste ↵
-        </button>
-        <span className="hint">
-          Fill in all parameters, then press <kbd className="kbd">↵</kbd> to
-          paste
+      <div className="flex items-center gap-3 pt-1">
+        <Button
+          size="sm"
+          className="gap-1.5"
+          type="submit"
+          disabled={!allFilled}
+        >
+          <ClipboardPaste className="h-3.5 w-3.5" />
+          Paste
+        </Button>
+        <span className="text-[11px] text-muted-foreground/60">
+          Fill in all parameters, then press{" "}
+          <kbd className="inline-block px-1.5 py-0.5 rounded bg-muted border border-border/60 font-mono text-[10px] text-muted-foreground">
+            ↵
+          </kbd>{" "}
+          to paste
         </span>
       </div>
     </form>
