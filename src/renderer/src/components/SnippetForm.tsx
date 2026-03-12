@@ -1,4 +1,10 @@
+import { Plus, X } from "lucide-react";
 import { memo, useRef, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { extractParams } from "../../../shared/cursor-placeholder";
 import type { SnippetInput } from "../../../shared/snippet-model";
 
@@ -45,12 +51,16 @@ export const SnippetForm = memo(function SnippetForm(props: {
   }
 
   return (
-    <form className="stack" onSubmit={(event) => void props.onSubmit(event)}>
-      <label>
-        <span>Title</span>
-        <input
+    <form
+      className="flex flex-col gap-4"
+      onSubmit={(event) => void props.onSubmit(event)}
+    >
+      <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground">Title</Label>
+        <Input
           placeholder="e.g. Git commit amend"
           value={props.draft.title}
+          className="h-9 bg-background/50 border-border/60"
           onChange={(event) =>
             props.onChange({
               ...props.draft,
@@ -58,13 +68,14 @@ export const SnippetForm = memo(function SnippetForm(props: {
             })
           }
         />
-      </label>
-      <label>
-        <span>Command / text</span>
-        <textarea
+      </div>
+      <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground">Command / text</Label>
+        <Textarea
           ref={textareaRef}
           placeholder="e.g. git commit --amend --no-edit"
           rows={4}
+          className="bg-background/50 border-border/60 font-mono text-[13px] resize-y"
           value={props.draft.value}
           onChange={(event) =>
             props.onChange({
@@ -73,13 +84,13 @@ export const SnippetForm = memo(function SnippetForm(props: {
             })
           }
         />
-      </label>
+      </div>
 
-      <div className="param-toolbar">
+      <div className="flex flex-wrap items-center gap-2">
         {showParamInput ? (
-          <div className="param-toolbar__input-row">
-            <input
-              className="param-toolbar__name-input"
+          <div className="flex items-center gap-1.5">
+            <Input
+              className="w-28 h-7 text-xs font-mono bg-background/50 border-border/60"
               type="text"
               placeholder="param name"
               value={paramName}
@@ -96,47 +107,59 @@ export const SnippetForm = memo(function SnippetForm(props: {
                 }
               }}
             />
-            <button
-              className="action-button action-button--small"
+            <Button
+              size="sm"
+              className="h-7 px-2 text-xs"
               type="button"
               disabled={!paramName.trim()}
               onClick={insertParam}
             >
               Insert
-            </button>
-            <button
-              className="ghost-button"
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0"
               type="button"
               onClick={() => {
                 setShowParamInput(false);
                 setParamName("");
               }}
             >
-              ✕
-            </button>
+              <X className="h-3 w-3" />
+            </Button>
           </div>
         ) : (
-          <button
-            className="secondary-button secondary-button--small"
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2.5 text-xs gap-1"
             type="button"
             onClick={() => setShowParamInput(true)}
           >
-            + Add Param
-          </button>
+            <Plus className="h-3 w-3" />
+            Add Param
+          </Button>
         )}
 
         {detectedParams.length > 0 && (
-          <div className="param-toolbar__tags">
+          <div className="flex flex-wrap gap-1">
             {detectedParams.map((p) => (
-              <span key={p} className="param-tag">{`{${p}}`}</span>
+              <Badge
+                key={p}
+                variant="outline"
+                className="font-mono text-[10.5px] px-1.5 py-0 text-primary border-primary/30 bg-primary/5"
+              >
+                {`{${p}}`}
+              </Badge>
             ))}
           </div>
         )}
       </div>
 
-      <button className="action-button" disabled={props.saving} type="submit">
+      <Button className="w-full" disabled={props.saving} type="submit">
         {props.saving ? "Saving…" : "Save snippet"}
-      </button>
+      </Button>
     </form>
   );
 });

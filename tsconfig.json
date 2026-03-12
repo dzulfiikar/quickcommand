@@ -13,7 +13,11 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["bun-types", "node"]
+    "types": ["bun-types", "node"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/renderer/src/*"]
+    }
   },
   "include": ["src", "tests", "scripts", "electron.vite.config.ts"]
 }

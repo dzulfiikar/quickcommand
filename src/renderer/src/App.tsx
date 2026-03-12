@@ -1,4 +1,8 @@
+import { AlertTriangle, Loader2, ShieldAlert } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { InsertResult } from "../../shared/app-api";
 import type { Settings } from "../../shared/settings-model";
 import type { SnippetInput, SnippetRecord } from "../../shared/snippet-model";
@@ -67,6 +71,7 @@ export function App() {
       cleanupSnippets();
       cleanupHotkey();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -92,12 +97,12 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    if (state.permissionGranted) {
+    if (state.permissionGranted || state.loading) {
       stopPolling();
       return;
     }
 
-    if (state.loading) return;
+    if (pollRef.current) return;
 
     pollRef.current = setInterval(async () => {
       try {
@@ -158,6 +163,11 @@ export function App() {
       }));
     }
   }
+
+  const handleQueryChange = useCallback((query: string) => {
+    void refresh(query);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function submitSnippet(event: React.FormEvent) {
     event.preventDefault();
@@ -275,9 +285,7 @@ export function App() {
     onInsert: insertSnippet,
     onInsertText: insertSnippetText,
     onNewSnippet: newSnippet,
-    onQueryChange: (query) => {
-      void refresh(query);
-    },
+    onQueryChange: handleQueryChange,
     onQuit: () => window.quickCommand.app.quit(),
     onRemove: removeSnippet,
     onSaveSettings: updateSettings,
@@ -290,71 +298,118 @@ export function App() {
   };
 
   const content = renderScreen(kind, screenProps);
+  const showHeader = kind === "library" || kind === "onboarding";
 
   return (
-    <div className={`screen screen-${kind}`}>
-      <div className="ambient ambient-a" />
-      <div className="ambient ambient-b" />
-      <main className="shell">
-        <header className="hero">
-          <div>
-            <p className="eyebrow">QuickCommand</p>
-            <h1>
-              {kind === "palette" && "Quick Search"}
-              {kind === "tray" && "Snippets"}
-              {kind === "onboarding" && "Welcome"}
-              {kind === "library" && "Snippet Library"}
-            </h1>
-          </div>
-          {state.settings ? (
-            <div className="meta">
-              <span>
-                {state.settings.globalShortcut ?? "No hotkey configured"}
-              </span>
-              <span>
-                {state.permissionGranted
-                  ? "Accessibility ready"
-                  : "Accessibility required"}
-              </span>
+    <div className="h-screen mesh-bg flex flex-col overflow-hidden">
+      <main
+        className={cn(
+          "flex-1 flex flex-col min-h-0 p-4",
+          kind === "library" && "pt-10",
+          kind === "onboarding" && "pt-10",
+          kind === "palette" && "pt-9",
+        )}
+      >
+        {/* Header — only for library and onboarding */}
+        {showHeader && (
+          <header className="drag-region flex items-center justify-between gap-3 mb-4 pb-3.5 border-b border-border/40">
+            <div className="no-drag">
+              <p className="text-[10px] font-bold tracking-widest uppercase text-primary">
+                QuickCommand
+              </p>
+              <h1 className="text-[15px] font-semibold text-foreground mt-0.5">
+                {kind === "onboarding" && "Welcome"}
+                {kind === "library" && "Snippet Library"}
+              </h1>
             </div>
-          ) : null}
-        </header>
-
-        {state.error ? (
-          <div className="banner banner-error">
-            <span>{state.error}</span>
-            {state.error.includes("Accessibility") ? (
-              <button
-                className="banner-action"
-                type="button"
-                onClick={() => void promptAccessibility()}
-              >
-                Grant Access
-              </button>
+            {state.settings ? (
+              <div className="no-drag flex gap-1.5">
+                <Badge
+                  variant="secondary"
+                  className="text-[11px] font-normal px-2 py-0.5 bg-secondary/50"
+                >
+                  {state.settings.globalShortcut ?? "No hotkey configured"}
+                </Badge>
+                <Badge
+                  variant={
+                    state.permissionGranted ? "secondary" : "destructive"
+                  }
+                  className={cn(
+                    "text-[11px] font-normal px-2 py-0.5",
+                    state.permissionGranted && "bg-secondary/50",
+                  )}
+                >
+                  {state.permissionGranted
+                    ? "Accessibility ready"
+                    : "Accessibility required"}
+                </Badge>
+              </div>
             ) : null}
+          </header>
+        )}
+
+        {/* Error banner */}
+        {state.error ? (
+          <div className="mb-3 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-[13px] text-red-300 animate-in fade-in duration-200">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+              <div>
+                <span>{state.error}</span>
+                {state.error.includes("Accessibility") ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2 h-6 text-[11px] border-destructive/30 text-red-300 hover:bg-destructive/10"
+                    onClick={() => void promptAccessibility()}
+                  >
+                    <ShieldAlert className="h-3 w-3 mr-1" />
+                    Grant Access
+                  </Button>
+                ) : null}
+              </div>
+            </div>
           </div>
         ) : null}
 
+        {/* Permission warning */}
         {!state.permissionGranted && !state.loading && kind !== "onboarding" ? (
-          <div className="banner banner-warning">
-            <span>Accessibility access is required to paste snippets.</span>
-            <button
-              className="banner-action"
-              type="button"
-              onClick={() => void promptAccessibility()}
-            >
-              Grant Access
-            </button>
+          <div className="mb-3 rounded-lg border border-yellow-500/20 bg-yellow-500/5 px-4 py-3 text-[13px] text-yellow-300">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-yellow-400 mt-0.5 shrink-0" />
+              <div>
+                <span>Accessibility access is required to paste snippets.</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2 h-6 text-[11px] border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/10"
+                  onClick={() => void promptAccessibility()}
+                >
+                  <ShieldAlert className="h-3 w-3 mr-1" />
+                  Grant Access
+                </Button>
+              </div>
+            </div>
           </div>
         ) : null}
+
+        {/* Hotkey warning */}
         {hotkeyWarning ? (
-          <div className="banner banner-warning">{hotkeyWarning}</div>
+          <div className="mb-3 rounded-lg border border-yellow-500/20 bg-yellow-500/5 px-4 py-3 text-[13px] text-yellow-300">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-yellow-400 shrink-0" />
+              {hotkeyWarning}
+            </div>
+          </div>
         ) : null}
 
+        {/* Loading */}
         {state.loading ? (
-          <div className="panel">Loading QuickCommand…</div>
+          <div className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-sm">Loading QuickCommand…</span>
+          </div>
         ) : (
-          content
+          <div className="flex-1 min-h-0">{content}</div>
         )}
       </main>
     </div>

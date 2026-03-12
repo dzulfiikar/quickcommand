@@ -1,11 +1,21 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 
-import { App } from "./App";
 import "./styles.css";
 
-ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-);
+async function boot() {
+  // In browser (non-Electron), load mock preload API
+  if (!window.quickCommand) {
+    await import("./mock-preload");
+  }
+
+  const { App } = await import("./App");
+
+  ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>,
+  );
+}
+
+void boot();
