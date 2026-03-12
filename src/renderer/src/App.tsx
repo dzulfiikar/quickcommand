@@ -350,54 +350,50 @@ export function App() {
 
         {/* Error banner */}
         {state.error ? (
-          <div className="mb-3 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-[13px] text-red-300 animate-in fade-in duration-200">
-            <div className="flex items-start gap-2">
-              <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
-              <div>
-                <span>{state.error}</span>
-                {state.error.includes("Accessibility") ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-2 h-6 text-[11px] border-destructive/30 text-red-300 hover:bg-destructive/10"
-                    onClick={() => void promptAccessibility()}
-                  >
-                    <ShieldAlert className="h-3 w-3 mr-1" />
-                    Grant Access
-                  </Button>
-                ) : null}
-              </div>
+          <div className="mb-3 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3.5 text-[13px] text-red-300 animate-in fade-in duration-200">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+              <span className="flex-1">{state.error}</span>
+              {state.error.includes("Accessibility") ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-[11px] border-destructive/30 text-red-300 hover:bg-destructive/10 shrink-0"
+                  onClick={() => void promptAccessibility()}
+                >
+                  <ShieldAlert className="h-3 w-3 mr-1" />
+                  Grant Access
+                </Button>
+              ) : null}
             </div>
           </div>
         ) : null}
 
         {/* Permission warning */}
         {!state.permissionGranted && !state.loading && kind !== "onboarding" ? (
-          <div className="mb-3 rounded-lg border border-yellow-500/20 bg-yellow-500/5 px-4 py-3 text-[13px] text-yellow-300">
-            <div className="flex items-start gap-2">
-              <AlertTriangle className="h-4 w-4 text-yellow-400 mt-0.5 shrink-0" />
-              <div>
-                <span>Accessibility access is required to paste snippets.</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-2 h-6 text-[11px] border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/10"
-                  onClick={() => void promptAccessibility()}
-                >
-                  <ShieldAlert className="h-3 w-3 mr-1" />
-                  Grant Access
-                </Button>
-              </div>
+          <div className="mb-3 rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-3.5 text-[13px] text-yellow-300">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="h-4 w-4 text-yellow-400 shrink-0" />
+              <span className="flex-1">Accessibility access is required to paste snippets.</span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-[11px] border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/10 shrink-0"
+                onClick={() => void promptAccessibility()}
+              >
+                <ShieldAlert className="h-3 w-3 mr-1" />
+                Grant Access
+              </Button>
             </div>
           </div>
         ) : null}
 
         {/* Hotkey warning */}
         {hotkeyWarning ? (
-          <div className="mb-3 rounded-lg border border-yellow-500/20 bg-yellow-500/5 px-4 py-3 text-[13px] text-yellow-300">
-            <div className="flex items-center gap-2">
+          <div className="mb-3 rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-3.5 text-[13px] text-yellow-300">
+            <div className="flex items-center gap-3">
               <AlertTriangle className="h-4 w-4 text-yellow-400 shrink-0" />
-              {hotkeyWarning}
+              <span className="flex-1">{hotkeyWarning}</span>
             </div>
           </div>
         ) : null}
