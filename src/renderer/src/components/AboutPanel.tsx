@@ -17,7 +17,7 @@ export const AboutPanel = memo(function AboutPanel(props: {
             QuickCommand
           </h2>
           <span className="font-mono text-[11px] text-muted-foreground">
-            v0.1.0
+            v{__APP_VERSION__}
           </span>
         </div>
       </div>
