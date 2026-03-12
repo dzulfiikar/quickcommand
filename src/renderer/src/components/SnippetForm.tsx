@@ -8,6 +8,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { extractParams } from "../../../shared/cursor-placeholder";
 import type { SnippetInput } from "../../../shared/snippet-model";
 
+type FieldErrors = { title?: string; value?: string };
+
+function validate(draft: SnippetInput): FieldErrors {
+  const errors: FieldErrors = {};
+  if (!draft.title.trim()) errors.title = "Title is required";
+  if (!draft.value.trim()) errors.value = "Command text is required";
+  return errors;
+}
+
 export const SnippetForm = memo(function SnippetForm(props: {
   draft: SnippetInput;
   onChange(value: SnippetInput): void;
@@ -17,8 +26,27 @@ export const SnippetForm = memo(function SnippetForm(props: {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [paramName, setParamName] = useState("");
   const [showParamInput, setShowParamInput] = useState(false);
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   const detectedParams = extractParams(props.draft.value);
+
+  function handleBlur(field: "title" | "value") {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    const fieldErrors = validate(props.draft);
+    setErrors(fieldErrors);
+  }
+
+  function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    const fieldErrors = validate(props.draft);
+    setErrors(fieldErrors);
+    setTouched({ title: true, value: true });
+
+    if (Object.keys(fieldErrors).length > 0) return;
+
+    void props.onSubmit(event);
+  }
 
   function insertParam() {
     const name = paramName.trim();
@@ -50,32 +78,52 @@ export const SnippetForm = memo(function SnippetForm(props: {
     setShowParamInput(false);
   }
 
+  const titleError = touched.title ? errors.title : undefined;
+  const valueError = touched.value ? errors.value : undefined;
+
   return (
-    <form
-      className="flex flex-col gap-4"
-      onSubmit={(event) => void props.onSubmit(event)}
-    >
+    <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
       <div className="space-y-1.5">
-        <Label className="text-xs text-muted-foreground">Title</Label>
+        <Label
+          className={`text-xs ${titleError ? "text-destructive" : "text-muted-foreground"}`}
+        >
+          Title
+        </Label>
         <Input
           placeholder="e.g. Git commit amend"
           value={props.draft.title}
-          className="h-9 bg-background/50 border-border/60"
+          className={`h-9 bg-background/50 ${
+            titleError
+              ? "border-destructive/50 focus-visible:ring-destructive/30"
+              : "border-border/60"
+          }`}
           onChange={(event) =>
             props.onChange({
               ...props.draft,
               title: event.target.value,
             })
           }
+          onBlur={() => handleBlur("title")}
         />
+        {titleError && (
+          <p className="text-[11px] text-destructive mt-1">{titleError}</p>
+        )}
       </div>
       <div className="space-y-1.5">
-        <Label className="text-xs text-muted-foreground">Command / text</Label>
+        <Label
+          className={`text-xs ${valueError ? "text-destructive" : "text-muted-foreground"}`}
+        >
+          Command / text
+        </Label>
         <Textarea
           ref={textareaRef}
           placeholder="e.g. git commit --amend --no-edit"
           rows={4}
-          className="bg-background/50 border-border/60 font-mono text-[13px] resize-y"
+          className={`bg-background/50 font-mono text-[13px] resize-y ${
+            valueError
+              ? "border-destructive/50 focus-visible:ring-destructive/30"
+              : "border-border/60"
+          }`}
           value={props.draft.value}
           onChange={(event) =>
             props.onChange({
@@ -83,7 +131,11 @@ export const SnippetForm = memo(function SnippetForm(props: {
               value: event.target.value,
             })
           }
+          onBlur={() => handleBlur("value")}
         />
+        {valueError && (
+          <p className="text-[11px] text-destructive mt-1">{valueError}</p>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -109,7 +161,7 @@ export const SnippetForm = memo(function SnippetForm(props: {
             />
             <Button
               size="sm"
-              className="h-7 px-2 text-xs"
+              className="h-7 px-2 text-xs pressable"
               type="button"
               disabled={!paramName.trim()}
               onClick={insertParam}
@@ -157,7 +209,7 @@ export const SnippetForm = memo(function SnippetForm(props: {
         )}
       </div>
 
-      <Button className="w-full" disabled={props.saving} type="submit">
+      <Button className="w-full pressable" disabled={props.saving} type="submit">
         {props.saving ? "Saving…" : "Save snippet"}
       </Button>
     </form>

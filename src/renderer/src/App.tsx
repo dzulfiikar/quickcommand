@@ -21,6 +21,29 @@ const insertErrorMessages = {
     "Accessibility permission is required before snippets can be pasted into other apps.",
 } satisfies Record<Exclude<InsertResult, { ok: true }>["reason"], string>;
 
+/** Extract a readable message from Zod or generic errors */
+function friendlyError(error: unknown, fallback: string): string {
+  if (error instanceof Error) {
+    // Zod errors come through IPC as serialized JSON strings
+    try {
+      const parsed = JSON.parse(error.message);
+      if (Array.isArray(parsed)) {
+        // Zod v4 error format: array of issues
+        return parsed
+          .map(
+            (issue: { path?: string[]; message?: string }) =>
+              issue.message ?? "Invalid value",
+          )
+          .join(". ");
+      }
+    } catch {
+      // Not JSON — use the message directly
+    }
+    return error.message;
+  }
+  return fallback;
+}
+
 type ScreenState = {
   error: string | null;
   loading: boolean;
@@ -155,10 +178,7 @@ export function App() {
     } catch (error) {
       setState((current) => ({
         ...current,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to load QuickCommand data.",
+        error: friendlyError(error, "Failed to load QuickCommand data."),
         loading: false,
       }));
     }
@@ -186,8 +206,7 @@ export function App() {
     } catch (error) {
       setState((current) => ({
         ...current,
-        error:
-          error instanceof Error ? error.message : "Failed to save snippet.",
+        error: friendlyError(error, "Failed to save snippet."),
       }));
     } finally {
       setState((current) => ({ ...current, saving: false }));
@@ -206,8 +225,7 @@ export function App() {
     } catch (error) {
       setState((current) => ({
         ...current,
-        error:
-          error instanceof Error ? error.message : "Failed to paste snippet.",
+        error: friendlyError(error, "Failed to paste snippet."),
       }));
     }
     await refresh(state.query);
@@ -220,8 +238,7 @@ export function App() {
     } catch (error) {
       setState((current) => ({
         ...current,
-        error:
-          error instanceof Error ? error.message : "Failed to paste snippet.",
+        error: friendlyError(error, "Failed to paste snippet."),
       }));
     }
     await refresh(state.query);
