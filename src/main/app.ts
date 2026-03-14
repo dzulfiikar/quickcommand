@@ -77,10 +77,10 @@ async function bootstrap(): Promise<void> {
   createTray();
   registerShortcut(settings.globalShortcut);
 
-  if (settings.firstRunComplete) {
-    await showLibrary();
-  } else {
+  if (!settings.firstRunComplete) {
     await showOnboarding();
+  } else if (settings.showWindowOnStartup) {
+    await showLibrary();
   }
 
   app.on("activate", () => {

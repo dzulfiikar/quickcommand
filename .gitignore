@@ -6,3 +6,4 @@ dist-native
 .worktrees
 worktrees
 docs
+.github/copilot-instructions.md

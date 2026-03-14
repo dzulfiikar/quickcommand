@@ -5,6 +5,7 @@ export const settingsSchema = z.object({
   launchAtLogin: z.boolean(),
   pasteRestoreDelayMs: z.number().int().nonnegative(),
   firstRunComplete: z.boolean(),
+  showWindowOnStartup: z.boolean(),
 });
 
 export const defaultSettings = {
@@ -12,6 +13,7 @@ export const defaultSettings = {
   launchAtLogin: false,
   pasteRestoreDelayMs: 150,
   firstRunComplete: false,
+  showWindowOnStartup: false,
 } satisfies z.input<typeof settingsSchema>;
 
 export type Settings = z.infer<typeof settingsSchema>;

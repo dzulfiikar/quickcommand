@@ -41,6 +41,7 @@ const defaultSettings: Settings = {
   launchAtLogin: false,
   pasteRestoreDelayMs: 150,
   firstRunComplete: true,
+  showWindowOnStartup: false,
 };
 
 let settings = { ...defaultSettings };

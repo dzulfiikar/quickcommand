@@ -70,6 +70,18 @@ export const SettingsPanel = memo(function SettingsPanel(props: {
           }
         />
       </div>
+      <Separator className="bg-border/40" />
+      <div className="flex items-center justify-between">
+        <Label className="text-sm text-foreground cursor-pointer">
+          Show window on startup
+        </Label>
+        <Switch
+          checked={props.settings.showWindowOnStartup}
+          onCheckedChange={(checked) =>
+            void props.onSaveSettings({ showWindowOnStartup: checked })
+          }
+        />
+      </div>
     </div>
   );
 });
