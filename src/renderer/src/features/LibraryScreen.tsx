@@ -11,12 +11,13 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { fadeIn } from "@/lib/motion";
+import { getSnippetPreviewText } from "@/lib/snippet-preview";
 import {
   extractParams,
   hasParams,
@@ -29,14 +30,35 @@ import { SearchBar } from "../components/SearchBar";
 import { SettingsPanel } from "../components/SettingsPanel";
 import { SnippetForm } from "../components/SnippetForm";
 import type { ScreenProps } from "./screen-props";
+import {
+  getLibraryPageItems,
+  getLibraryPageForItemId,
+  getLibraryPaginationState,
+} from "./tray-pagination";
 
 type DetailView = "snippet" | "about";
 
 export function LibraryScreen(props: ScreenProps) {
   const [paramSnippet, setParamSnippet] = useState<SnippetRecord | null>(null);
+  const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<SnippetRecord | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [detailView, setDetailView] = useState<DetailView>("snippet");
+
+  useEffect(() => {
+    setPage(0);
+  }, [props.query]);
+
+  useEffect(() => {
+    const { page: clampedPage } = getLibraryPaginationState(
+      page,
+      props.filtered.length,
+    );
+
+    if (clampedPage !== page) {
+      setPage(clampedPage);
+    }
+  }, [page, props.filtered.length]);
 
   function handleInsert(id: string) {
     const snippet = props.filtered.find((s) => s.id === id);
@@ -69,6 +91,80 @@ export function LibraryScreen(props: ScreenProps) {
   function handleShowAbout() {
     setSelected(null);
     setDetailView("about");
+  }
+
+  const pagination = getLibraryPaginationState(page, props.filtered.length);
+  const visibleSnippets = getLibraryPageItems(
+    props.filtered,
+    pagination.page,
+    pagination.pageSize,
+  );
+
+  useEffect(() => {
+    if (detailView !== "snippet" || !selected) {
+      return;
+    }
+
+    const selectedPage = getLibraryPageForItemId(
+      props.filtered,
+      selected.id,
+      pagination.pageSize,
+    );
+
+    if (selectedPage === null) {
+      setSelected(null);
+      props.onNewSnippet();
+      return;
+    }
+
+    if (selectedPage !== page) {
+      setPage(selectedPage);
+    }
+  }, [
+    detailView,
+    page,
+    pagination.pageSize,
+    props.filtered,
+    props.onNewSnippet,
+    selected,
+  ]);
+
+  function handlePageChange(nextPage: number) {
+    const nextPagination = getLibraryPaginationState(
+      nextPage,
+      props.filtered.length,
+      {
+        pageSize: pagination.pageSize,
+      },
+    );
+    const nextVisibleSnippets = getLibraryPageItems(
+      props.filtered,
+      nextPagination.page,
+      nextPagination.pageSize,
+    );
+
+    setPage(nextPagination.page);
+
+    if (detailView !== "snippet" || !selected) {
+      return;
+    }
+
+    const selectedStillVisible = nextVisibleSnippets.some(
+      (snippet) => snippet.id === selected.id,
+    );
+
+    if (selectedStillVisible) {
+      return;
+    }
+
+    const nextSelected = nextVisibleSnippets[0];
+    if (nextSelected) {
+      handleSelectSnippet(nextSelected);
+      return;
+    }
+
+    setSelected(null);
+    props.onNewSnippet();
   }
 
   return (
@@ -122,7 +218,7 @@ export function LibraryScreen(props: ScreenProps) {
             </div>
           ) : (
             <ul className="flex flex-col gap-0.5 p-2 list-none">
-              {props.filtered.map((snippet) => (
+              {visibleSnippets.map((snippet) => (
                 <li key={snippet.id}>
                   <button
                     type="button"
@@ -131,11 +227,11 @@ export function LibraryScreen(props: ScreenProps) {
                     }`}
                     onClick={() => handleSelectSnippet(snippet)}
                   >
-                    <h3 className="text-[13px] font-medium text-foreground leading-tight truncate">
-                      {snippet.title}
+                    <h3 className="snippet-preview-title text-[13px] font-medium text-foreground leading-tight">
+                      {getSnippetPreviewText(snippet.title)}
                     </h3>
-                    <p className="font-mono text-[11px] text-foreground/50 mt-0.5 truncate">
-                      {snippet.value}
+                    <p className="snippet-preview-value font-mono text-[11px] text-foreground/50 mt-0.5">
+                      {getSnippetPreviewText(snippet.value)}
                     </p>
                   </button>
                 </li>
@@ -143,6 +239,34 @@ export function LibraryScreen(props: ScreenProps) {
             </ul>
           )}
         </ScrollArea>
+
+        {pagination.totalPages > 1 && (
+          <div className="px-3 py-2 border-t border-border/20 bg-background/10">
+            <div className="flex items-center justify-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-3 text-[11px]"
+                disabled={pagination.page === 0}
+                onClick={() => handlePageChange(page - 1)}
+              >
+                Prev
+              </Button>
+              <span className="text-[10.5px] font-mono text-muted-foreground tabular-nums">
+                {pagination.page + 1} / {pagination.totalPages}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-3 text-[11px]"
+                disabled={pagination.page >= pagination.totalPages - 1}
+                onClick={() => handlePageChange(page + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
 
         <Separator className="bg-border/30" />
 
@@ -228,7 +352,7 @@ export function LibraryScreen(props: ScreenProps) {
                   <div className="rounded-xl border border-border/50 bg-card/60 p-5 flex flex-col gap-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <h2 className="text-lg font-semibold text-foreground leading-tight">
+                        <h2 className="snippet-text-wrap text-lg font-semibold text-foreground leading-tight">
                           {selected.title}
                         </h2>
                         <div className="flex items-center gap-3 mt-2">
@@ -254,7 +378,7 @@ export function LibraryScreen(props: ScreenProps) {
                       </Button>
                     </div>
 
-                    <pre className="rounded-lg bg-background/60 border border-border/40 p-3 font-mono text-[13px] text-foreground/90 whitespace-pre-wrap break-all overflow-x-auto leading-relaxed">
+                    <pre className="snippet-text-wrap rounded-lg bg-background/60 border border-border/40 p-3 font-mono text-[13px] text-foreground/90 whitespace-pre-wrap overflow-x-auto leading-relaxed">
                       {selected.value}
                     </pre>
 

@@ -3,6 +3,7 @@ import { memo, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getSnippetPreviewText } from "@/lib/snippet-preview";
 
 /** Convert snake_case/camelCase param names to readable labels */
 function humanize(name: string): string {
@@ -58,8 +59,8 @@ export const ParamInputForm = memo(function ParamInputForm(props: {
     >
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-foreground">
-            {props.snippetTitle}
+          <h3 className="snippet-text-wrap text-sm font-semibold text-foreground">
+            {getSnippetPreviewText(props.snippetTitle)}
           </h3>
           <p className="text-[11px] text-muted-foreground mt-0.5">
             Fill in the parameters below

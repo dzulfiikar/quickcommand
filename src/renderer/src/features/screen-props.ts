@@ -25,6 +25,7 @@ export type ScreenProps = {
   onShowLibrary(): Promise<void>;
   onSubmitSnippet(event: React.FormEvent): Promise<void>;
   permissionGranted: boolean;
+  query: string;
   saving: boolean;
   settings: Settings | null;
 };

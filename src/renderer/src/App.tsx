@@ -1,7 +1,17 @@
-import { AlertTriangle, Loader2, ShieldAlert } from "lucide-react";
+import {
+  AlertTriangle,
+  Command,
+  Loader2,
+  ShieldAlert,
+  ShieldCheck,
+} from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  getLibraryAccessibilityBadge,
+  getLibraryShortcutBadge,
+} from "@/lib/library-header-badges";
 import { cn } from "@/lib/utils";
 import type { InsertResult } from "../../shared/app-api";
 import type { Settings } from "../../shared/settings-model";
@@ -310,12 +320,19 @@ export function App() {
     onExport: () => window.quickCommand.snippets.exportToDialog(),
     onShowLibrary: () => window.quickCommand.app.showLibrary(),
     permissionGranted: state.permissionGranted,
+    query: state.query,
     saving: state.saving,
     settings: state.settings,
   };
 
   const content = renderScreen(kind, screenProps);
   const showHeader = kind === "library" || kind === "onboarding";
+  const shortcutBadge = state.settings
+    ? getLibraryShortcutBadge(state.settings.globalShortcut)
+    : null;
+  const accessibilityBadge = getLibraryAccessibilityBadge(
+    state.permissionGranted,
+  );
 
   return (
     <div className="h-screen mesh-bg flex flex-col overflow-hidden">
@@ -340,27 +357,57 @@ export function App() {
               </h1>
             </div>
             {state.settings ? (
-              <div className="no-drag flex gap-1.5">
-                <Badge
-                  variant="secondary"
-                  className="text-[11px] font-normal px-2 py-0.5 bg-secondary/50"
-                >
-                  {state.settings.globalShortcut ?? "No hotkey configured"}
-                </Badge>
-                <Badge
-                  variant={
-                    state.permissionGranted ? "secondary" : "destructive"
-                  }
-                  className={cn(
-                    "text-[11px] font-normal px-2 py-0.5",
-                    state.permissionGranted && "bg-secondary/50",
-                  )}
-                >
-                  {state.permissionGranted
-                    ? "Accessibility ready"
-                    : "Accessibility required"}
-                </Badge>
-              </div>
+              kind === "library" && shortcutBadge ? (
+                <div className="no-drag flex gap-1.5">
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "max-w-[240px] justify-start",
+                      shortcutBadge.className,
+                    )}
+                    title={shortcutBadge.label}
+                  >
+                    <Command className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{shortcutBadge.label}</span>
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "justify-start",
+                      accessibilityBadge.className,
+                    )}
+                  >
+                    {state.permissionGranted ? (
+                      <ShieldCheck className="h-3 w-3 shrink-0" />
+                    ) : (
+                      <ShieldAlert className="h-3 w-3 shrink-0" />
+                    )}
+                    <span>{accessibilityBadge.label}</span>
+                  </Badge>
+                </div>
+              ) : (
+                <div className="no-drag flex gap-1.5">
+                  <Badge
+                    variant="secondary"
+                    className="text-[11px] font-normal px-2 py-0.5 bg-secondary/50"
+                  >
+                    {state.settings.globalShortcut ?? "No hotkey configured"}
+                  </Badge>
+                  <Badge
+                    variant={
+                      state.permissionGranted ? "secondary" : "destructive"
+                    }
+                    className={cn(
+                      "text-[11px] font-normal px-2 py-0.5",
+                      state.permissionGranted && "bg-secondary/50",
+                    )}
+                  >
+                    {state.permissionGranted
+                      ? "Accessibility ready"
+                      : "Accessibility required"}
+                  </Badge>
+                </div>
+              )
             ) : null}
           </header>
         )}

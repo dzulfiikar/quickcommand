@@ -4,6 +4,7 @@ import { memo, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { listItem, staggerContainer } from "@/lib/motion";
+import { getSnippetPreviewText } from "@/lib/snippet-preview";
 import type { SnippetRecord } from "../../../shared/snippet-model";
 
 export const SnippetList = memo(function SnippetList(props: {
@@ -54,15 +55,15 @@ export const SnippetList = memo(function SnippetList(props: {
           <motion.li
             key={snippet.id}
             variants={listItem}
-            className="group rounded-lg border border-border/40 bg-card/50 hover:bg-accent/40 hover:border-border/60 transition-colors px-3.5 py-2.5"
+                className="group rounded-lg border border-border/40 bg-card/50 hover:bg-accent/40 hover:border-border/60 transition-colors px-3.5 py-2.5"
           >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-[13.5px] font-medium text-foreground leading-tight">
-                    {snippet.title}
+                  <h3 className="snippet-preview-title text-[13.5px] font-medium text-foreground leading-tight">
+                    {getSnippetPreviewText(snippet.title)}
                   </h3>
-                  <p className="font-mono text-[11.5px] text-foreground/55 mt-0.5 truncate">
-                    {snippet.value}
+                  <p className="snippet-preview-value font-mono text-[11.5px] text-foreground/55 mt-0.5">
+                    {getSnippetPreviewText(snippet.value)}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">

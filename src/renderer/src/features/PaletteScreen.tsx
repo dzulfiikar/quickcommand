@@ -3,6 +3,7 @@ import { Plus, Search } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { fadeIn } from "@/lib/motion";
+import { getSnippetPreviewText } from "@/lib/snippet-preview";
 import {
   extractParams,
   hasParams,
@@ -190,11 +191,11 @@ export function PaletteScreen(props: ScreenProps) {
                     onMouseEnter={() => setSelectedIndex(index)}
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13.5px] font-medium text-foreground leading-tight truncate">
-                        {snippet.title}
+                      <p className="snippet-preview-title text-[13.5px] font-medium text-foreground leading-tight">
+                        {getSnippetPreviewText(snippet.title)}
                       </p>
-                      <p className="text-[11px] font-mono text-foreground/50 mt-0.5 truncate">
-                        {snippet.value}
+                      <p className="snippet-preview-value text-[11px] font-mono text-foreground/50 mt-0.5">
+                        {getSnippetPreviewText(snippet.value)}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">

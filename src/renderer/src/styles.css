@@ -155,3 +155,26 @@
 .pressable:active {
   transform: scale(0.98);
 }
+
+.snippet-text-wrap {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.snippet-preview-title,
+.snippet-preview-value {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.snippet-preview-title {
+  -webkit-line-clamp: 2;
+}
+
+.snippet-preview-value {
+  -webkit-line-clamp: 2;
+}

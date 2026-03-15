@@ -1,97 +1,107 @@
 # QuickCommand
 
-A macOS menubar snippet launcher built with Electron, TypeScript, React, and Bun. Save terminal commands or text snippets, search instantly with a global shortcut, and paste into any app.
+QuickCommand is a macOS menu bar app for people who reuse commands, prompts, replies, and text snippets all day. Save once, summon it instantly with a global shortcut, and paste into the app you are already using.
 
-## Features
+Built for fast hands-off insertion, QuickCommand combines a command palette, a compact menu bar popover, and a full snippet library in one local-first desktop app.
 
-- **Global shortcut** — open the search palette from anywhere (`⌘⇧Space` by default)
-- **Fuzzy search** — find snippets instantly across your entire library
-- **Clipboard-based paste** — insert snippets into the focused app via `⌘V` automation
-- **Menubar popover** — quick access from the macOS menu bar
-- **Full library window** — create, edit, search, import/export snippets
-- **Local-only storage** — all data stays on your machine as JSON files
-- **macOS native** — Swift helper for Accessibility automation, template tray icon, LSUIElement (no Dock icon)
+## Why QuickCommand
+
+- **Stop retyping repeatable work**: keep shell commands, release notes, support replies, prompts, and templates one shortcut away.
+- **Search feels immediate**: fuzzy matching is ranked by relevance, recency, and use count, so frequently used snippets rise to the top.
+- **Paste into real apps, not just into QuickCommand**: the app hides, writes to the clipboard, triggers `Cmd+V`, then restores your clipboard contents.
+- **Stay in your flow**: use the global shortcut for fast lookup, the menu bar for quick access, and the library window when you need full editing control.
+- **Keep everything on your Mac**: snippets and settings are stored locally as JSON with import/export support.
+
+## What You Get
+
+- **Global command palette** for keyboard-first search and paste
+- **Menu bar popover** for quick access without opening the full library
+- **Snippet library window** with create, edit, delete, search, import, and export
+- **Parameterized snippets** using placeholders like `{name}` and `{place}`
+- **Onboarding flow** for Accessibility permission and shortcut setup
+- **Customizable settings** for launch at login, startup behavior, and clipboard restore delay
+- **Usage-aware search results** powered by fuzzy matching plus recency/use-count sorting
+
+## Screenshots
+
+### Library Window
+
+![QuickCommand library window](screenshots/library-window.png)
+
+### Command Palette
+
+![QuickCommand command palette](screenshots/command-palette.png)
+
+### Menubar Popover
+
+![QuickCommand menubar popover](screenshots/menubar-popover.png)
+
+## Current Product Shape
+
+QuickCommand currently ships as a macOS-only Electron app with four main surfaces:
+
+- **Onboarding**: explains the app, requests Accessibility access, and lets you confirm the global shortcut.
+- **Palette**: a centered search UI for fast snippet lookup and paste.
+- **Library**: the main management window for your snippet collection.
+- **Tray popover**: a compact, paged menu bar view for quick snippet access and common actions.
+
+The default shortcut is `CommandOrControl+Alt+Space`, and it can be changed from the library settings panel.
+
+## Best For
+
+- Developers who repeat Git, Bun, Docker, Kubernetes, or deployment commands
+- Operators who need incident-response snippets and production runbooks close at hand
+- Support, sales, and ops teams who reuse replies and structured text
+- Anyone who wants a local snippet launcher instead of a cloud workspace
 
 ## Requirements
 
-- macOS (Apple Silicon or Intel)
+- macOS
 - [Bun](https://bun.sh/) v1.x
-- Xcode Command Line Tools (for Swift helper compilation)
-- Accessibility permission (granted at first run)
+- Xcode Command Line Tools
+- Accessibility permission for paste automation
 
-## Getting Started
+## Tech Overview
+
+### Core Dependencies
+
+- **Electron 41 + React 19 + TypeScript** for the desktop UI
+- **Bun** for package management, scripts, and tests
+- **electron-vite** for main, preload, and renderer builds
+- **Fuse.js** for fuzzy snippet search
+- **Zod** for snippet/settings validation
+- **Swift helper** for macOS Accessibility checks, settings deep links, and paste automation
+
+### Development
 
 ```bash
 # Install dependencies
 bun install
 
-# Start development mode (builds Swift helper + launches app with hot reload)
+# Start Electron in development mode
 bun run dev
 
-# Run tests
+# Optional renderer-only browser preview
+bun run dev:browser
+
+# Run tests and type checks
 bun test
-
-# Type check
 bun run typecheck
+
+# Build and package
+bun run build
+bun run build:helper
+bun run package:dir
 ```
 
-## Scripts
+QuickCommand is local-first, macOS-only, and centered around Electron desktop workflows rather than web deployment.
 
-| Script | Description |
-|--------|-------------|
-| `bun run dev` | Development mode with hot reload |
-| `bun run build` | Build main, preload, and renderer |
-| `bun run build:helper` | Compile the Swift native helper |
-| `bun test` | Run all tests (unit + integration) |
-| `bun run typecheck` | TypeScript type check |
-| `bun run lint` | Lint with Biome |
-| `bun run format` | Auto-format with Biome |
-| `bun run package:dir` | Package to `.app` directory |
-| `bun run dist` | Full distribution build (`.app` + `.dmg`) |
+### Contribution Guide
 
-## Architecture
+If you contribute to QuickCommand:
 
-```
-src/
-├── main/           Electron main process
-│   ├── ipc/        IPC channel handlers (snippets, settings, automation)
-│   ├── services/   Business logic (search, paste, permissions, persistence)
-│   └── windows/    Window creation (palette, tray, library, onboarding)
-├── preload/        Sandboxed bridge — exposes window.quickCommand API
-├── renderer/       React UI
-│   └── src/
-│       ├── components/   Reusable UI (SearchBar, SnippetList, SnippetForm, SettingsPanel)
-│       └── features/     Screen components (Palette, Tray, Library, Onboarding)
-└── shared/         Isomorphic types and validation schemas
-
-native/             Swift helper for macOS Accessibility automation
-tests/              Bun test suites (unit + integration)
-resources/icons/    App icon (.icns) and tray template icons (.png)
-```
-
-### How paste works
-
-1. User selects a snippet → renderer sends `snippets:insert` IPC
-2. Main process saves current clipboard, writes snippet value to clipboard
-3. Swift helper simulates `⌘V` via CGEvent (requires Accessibility permission)
-4. Main process restores the original clipboard after a configurable delay
-
-### Key files
-
-| File | Purpose |
-|------|---------|
-| `src/shared/app-api.ts` | Type contract between Electron and React |
-| `src/main/services/snippet-repository.ts` | JSON-based snippet persistence |
-| `src/main/services/paste-service.ts` | Clipboard capture → paste → restore pipeline |
-| `native/.../main.swift` | Accessibility check, paste simulation, settings opener |
-
-## Tech Stack
-
-- **Runtime**: [Electron](https://www.electronjs.org/) 41 + [Bun](https://bun.sh/)
-- **Build**: [electron-vite](https://electron-vite.org/) + [Vite](https://vitejs.dev/)
-- **UI**: [React](https://react.dev/) 19
-- **Search**: [Fuse.js](https://www.fusejs.io/) (fuzzy matching)
-- **Validation**: [Zod](https://zod.dev/) 4
-- **Linting**: [Biome](https://biomejs.dev/)
-- **Testing**: Bun's built-in test runner
-- **Native**: Swift (macOS Accessibility automation)
+- keep product-facing changes aligned with the current macOS app behavior
+- run `bun test` and `bun run typecheck` before handing off changes
+- use `bun run build:helper` when touching native paste automation or packaging flows
+- update [README.md](README.md) and the root `screenshots/` folder when UI changes affect what users see
+- prefer small, focused changes over broad refactors unless the task explicitly calls for them
