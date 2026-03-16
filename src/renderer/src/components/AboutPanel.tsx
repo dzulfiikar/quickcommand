@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { memo } from "react";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { appRepository } from "../../../shared/app-meta";
 import type { AppUpdateInfo } from "../../../shared/update-model";
@@ -113,9 +114,11 @@ export const AboutPanel = memo(function AboutPanel(props: {
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Release notes
               </p>
-              <p className="mt-1 whitespace-pre-wrap text-[11px] leading-relaxed text-foreground/80">
-                {props.updateInfo.releaseNotes}
-              </p>
+              <ScrollArea className="mt-1 max-h-40 pr-2">
+                <p className="whitespace-pre-wrap text-[11px] leading-relaxed text-foreground/80">
+                  {props.updateInfo.releaseNotes}
+                </p>
+              </ScrollArea>
             </div>
           </>
         ) : null}
