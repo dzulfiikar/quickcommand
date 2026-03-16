@@ -86,11 +86,6 @@ export const AboutPanel = memo(function AboutPanel(props: {
                     : "Manual check"}
             </span>
           </div>
-          <p className="text-[11px] leading-relaxed text-muted-foreground">
-            Unsigned macOS builds cannot auto-install updates. QuickCommand
-            checks GitHub Releases and opens the latest download in your browser
-            for manual replacement.
-          </p>
         </div>
 
         {props.updateInfo ? (
