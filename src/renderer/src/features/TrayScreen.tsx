@@ -9,7 +9,7 @@ import {
   Search,
   Trash2,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { fadeIn } from "@/lib/motion";
@@ -24,10 +24,7 @@ import { AboutPanel } from "../components/AboutPanel";
 import { ParamInputForm } from "../components/ParamInputForm";
 import { SnippetForm } from "../components/SnippetForm";
 import type { ScreenProps } from "./screen-props";
-import {
-  getTrayPageItems,
-  getTrayPaginationState,
-} from "./tray-pagination";
+import { getTrayPageItems, getTrayPaginationState } from "./tray-pagination";
 
 function TrayShell(props: { children: React.ReactNode }) {
   return (
@@ -48,14 +45,18 @@ export function TrayScreen(props: ScreenProps) {
   const [showEditForm, setShowEditForm] = useState(false);
   const [page, setPage] = useState(0);
   const [query, setQuery] = useState("");
+  const queryInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    queryInputRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       props.onQueryChange(query);
     }, 120);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
+  }, [query, props.onQueryChange]);
 
   useEffect(() => {
     const { page: clampedPage } = getTrayPaginationState(
@@ -100,7 +101,14 @@ export function TrayScreen(props: ScreenProps) {
       <TrayShell>
         <ScrollArea className="flex-1 min-h-0">
           <div className="p-4">
-            <AboutPanel onClose={() => setShowAbout(false)} />
+            <AboutPanel
+              onCheckForUpdates={props.onCheckForUpdates}
+              onClose={() => setShowAbout(false)}
+              onOpenUpdateDownload={props.onOpenUpdateDownload}
+              updateChecking={props.updateChecking}
+              updateError={props.updateError}
+              updateInfo={props.updateInfo}
+            />
           </div>
         </ScrollArea>
       </TrayShell>
@@ -169,9 +177,9 @@ export function TrayScreen(props: ScreenProps) {
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border/30 shrink-0">
         <Search className="h-4 w-4 text-muted-foreground/50 shrink-0" />
         <input
-          autoFocus
           className="flex-1 bg-transparent text-[14px] text-foreground placeholder:text-muted-foreground/60 outline-none"
           placeholder="Search…"
+          ref={queryInputRef}
           type="text"
           value={query}
           onChange={(event) => {

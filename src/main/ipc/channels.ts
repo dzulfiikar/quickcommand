@@ -1,5 +1,7 @@
 export const channels = {
+  appCheckForUpdates: "app:check-for-updates",
   appHidePalette: "app:hide-palette",
+  appOpenUpdateDownload: "app:open-update-download",
   appQuit: "app:quit",
   appShowLibrary: "app:show-library",
   appShowOnboarding: "app:show-onboarding",

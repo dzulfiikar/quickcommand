@@ -2,13 +2,11 @@ import { motion } from "framer-motion";
 import {
   Calendar,
   ClipboardPaste,
-  Download,
   Hash,
   Info,
   Plus,
   Settings,
   Shield,
-  Upload,
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -31,8 +29,8 @@ import { SettingsPanel } from "../components/SettingsPanel";
 import { SnippetForm } from "../components/SnippetForm";
 import type { ScreenProps } from "./screen-props";
 import {
-  getLibraryPageItems,
   getLibraryPageForItemId,
+  getLibraryPageItems,
   getLibraryPaginationState,
 } from "./tray-pagination";
 
@@ -46,7 +44,9 @@ export function LibraryScreen(props: ScreenProps) {
   const [detailView, setDetailView] = useState<DetailView>("snippet");
 
   useEffect(() => {
-    setPage(0);
+    if (props.query !== undefined) {
+      setPage(0);
+    }
   }, [props.query]);
 
   useEffect(() => {
@@ -274,25 +274,6 @@ export function LibraryScreen(props: ScreenProps) {
         <div className="flex flex-col gap-1 p-3">
           <div className="flex items-center gap-1.5">
             <Button
-              size="sm"
-              className="h-7 flex-1 px-2 text-xs gap-1 pressable"
-              onClick={() => void props.onImport()}
-            >
-              <Download className="h-3 w-3" />
-              Import
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-7 flex-1 px-2 text-xs gap-1 pressable"
-              onClick={() => void props.onExport()}
-            >
-              <Upload className="h-3 w-3" />
-              Export
-            </Button>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Button
               variant="ghost"
               size="sm"
               className="h-7 flex-1 px-2 text-xs gap-1 pressable"
@@ -343,7 +324,14 @@ export function LibraryScreen(props: ScreenProps) {
                 <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider pb-2 border-b border-border/30">
                   About
                 </h2>
-                <AboutPanel onClose={() => setDetailView("snippet")} />
+                <AboutPanel
+                  onCheckForUpdates={props.onCheckForUpdates}
+                  onClose={() => setDetailView("snippet")}
+                  onOpenUpdateDownload={props.onOpenUpdateDownload}
+                  updateChecking={props.updateChecking}
+                  updateError={props.updateError}
+                  updateInfo={props.updateInfo}
+                />
               </div>
             ) : (
               <>
@@ -435,6 +423,8 @@ export function LibraryScreen(props: ScreenProps) {
             </div>
             <Separator className="bg-border/30" />
             <SettingsPanel
+              onExport={props.onExport}
+              onImport={props.onImport}
               settings={props.settings}
               onSaveSettings={props.onSaveSettings}
               showClipboardDelay

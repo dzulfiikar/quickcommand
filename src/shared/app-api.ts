@@ -1,5 +1,6 @@
 import type { Settings } from "./settings-model";
 import type { SnippetInput, SnippetRecord } from "./snippet-model";
+import type { AppUpdateInfo } from "./update-model";
 
 export type WindowKind = "palette" | "library" | "onboarding" | "tray";
 
@@ -30,9 +31,11 @@ export interface QuickCommandAPI {
     promptAccessibility(): Promise<boolean>;
   };
   app: {
+    checkForUpdates(): Promise<AppUpdateInfo>;
     showLibrary(): Promise<void>;
     showOnboarding(): Promise<void>;
     hidePalette(): Promise<void>;
+    openUpdateDownload(url: string): Promise<void>;
     quit(): Promise<void>;
     getWindowKind(): WindowKind;
     onSnippetsChanged(callback: () => void): () => void;

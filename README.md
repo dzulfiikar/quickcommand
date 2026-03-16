@@ -21,6 +21,7 @@ Built for fast hands-off insertion, QuickCommand combines a command palette, a c
 - **Onboarding flow** for Accessibility permission and shortcut setup
 - **Customizable settings** for launch at login, startup behavior, and clipboard restore delay
 - **Usage-aware search results** powered by fuzzy matching plus recency/use-count sorting
+- **In-app update checks** that compare your version with GitHub Releases and open a manual download flow for unsigned macOS builds
 
 ## Screenshots
 
@@ -56,9 +57,7 @@ The default shortcut is `CommandOrControl+Alt+Space`, and it can be changed from
 
 ## Requirements
 
-- macOS
-- [Bun](https://bun.sh/) v1.x
-- Xcode Command Line Tools
+- macOS M1 or later
 - Accessibility permission for paste automation
 
 ## Tech Overview
@@ -93,8 +92,6 @@ bun run build
 bun run build:helper
 bun run package:dir
 ```
-
-QuickCommand is local-first, macOS-only, and centered around Electron desktop workflows rather than web deployment.
 
 ### Contribution Guide
 

@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import type { InsertResult } from "../../shared/app-api";
 import type { Settings } from "../../shared/settings-model";
 import type { SnippetInput, SnippetRecord } from "../../shared/snippet-model";
+import type { AppUpdateInfo } from "../../shared/update-model";
 import { LibraryScreen } from "./features/LibraryScreen";
 import { OnboardingScreen } from "./features/OnboardingScreen";
 import { PaletteScreen } from "./features/PaletteScreen";
@@ -64,6 +65,12 @@ type ScreenState = {
   snippets: SnippetRecord[];
 };
 
+type UpdateState = {
+  checking: boolean;
+  error: string | null;
+  info: AppUpdateInfo | null;
+};
+
 const emptySnippet: SnippetInput = {
   title: "",
   value: "",
@@ -79,12 +86,68 @@ const defaultScreenState: ScreenState = {
   snippets: [],
 };
 
+const defaultUpdateState: UpdateState = {
+  checking: false,
+  error: null,
+  info: null,
+};
+
 export function App() {
   const kind = window.quickCommand.app.getWindowKind();
   const [state, setState] = useState<ScreenState>(defaultScreenState);
+  const [updateState, setUpdateState] =
+    useState<UpdateState>(defaultUpdateState);
   const [draft, setDraft] = useState<SnippetInput>(emptySnippet);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [hotkeyWarning, setHotkeyWarning] = useState<string | null>(null);
+  const queryRef = useRef(defaultScreenState.query);
+
+  const refresh = useCallback(
+    async (nextQuery = queryRef.current, showLoading = false) => {
+      if (showLoading) {
+        setState((current) => ({ ...current, loading: true, error: null }));
+      } else {
+        setState((current) => ({ ...current, error: null }));
+      }
+
+      try {
+        if (showLoading) {
+          const [settings, permissionGranted, snippets] = await Promise.all([
+            window.quickCommand.settings.get(),
+            window.quickCommand.settings.checkAccessibility(),
+            window.quickCommand.snippets.search(nextQuery),
+          ]);
+
+          setState((current) => ({
+            ...current,
+            loading: false,
+            permissionGranted,
+            query: nextQuery,
+            settings,
+            snippets,
+          }));
+        } else {
+          const snippets = await window.quickCommand.snippets.search(nextQuery);
+          setState((current) => ({
+            ...current,
+            query: nextQuery,
+            snippets,
+          }));
+        }
+      } catch (error) {
+        setState((current) => ({
+          ...current,
+          error: friendlyError(error, "Failed to load QuickCommand data."),
+          loading: false,
+        }));
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    queryRef.current = state.query;
+  }, [state.query]);
 
   useEffect(() => {
     void refresh("", true);
@@ -104,8 +167,7 @@ export function App() {
       cleanupSnippets();
       cleanupHotkey();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [refresh]);
 
   useEffect(() => {
     if (kind === "palette") {
@@ -154,50 +216,12 @@ export function App() {
 
   const filtered = state.snippets;
 
-  async function refresh(nextQuery = state.query, showLoading = false) {
-    if (showLoading) {
-      setState((current) => ({ ...current, loading: true, error: null }));
-    } else {
-      setState((current) => ({ ...current, error: null }));
-    }
-
-    try {
-      if (showLoading) {
-        const [settings, permissionGranted, snippets] = await Promise.all([
-          window.quickCommand.settings.get(),
-          window.quickCommand.settings.checkAccessibility(),
-          window.quickCommand.snippets.search(nextQuery),
-        ]);
-
-        setState((current) => ({
-          ...current,
-          loading: false,
-          permissionGranted,
-          query: nextQuery,
-          settings,
-          snippets,
-        }));
-      } else {
-        const snippets = await window.quickCommand.snippets.search(nextQuery);
-        setState((current) => ({
-          ...current,
-          query: nextQuery,
-          snippets,
-        }));
-      }
-    } catch (error) {
-      setState((current) => ({
-        ...current,
-        error: friendlyError(error, "Failed to load QuickCommand data."),
-        loading: false,
-      }));
-    }
-  }
-
-  const handleQueryChange = useCallback((query: string) => {
-    void refresh(query);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const handleQueryChange = useCallback(
+    (query: string) => {
+      void refresh(query);
+    },
+    [refresh],
+  );
 
   async function submitSnippet(event: React.FormEvent) {
     event.preventDefault();
@@ -290,6 +314,49 @@ export function App() {
     setState((current) => ({ ...current, permissionGranted: granted }));
   }
 
+  async function checkForUpdates() {
+    setUpdateState((current) => ({
+      ...current,
+      checking: true,
+      error: null,
+    }));
+
+    try {
+      const info = await window.quickCommand.app.checkForUpdates();
+      setUpdateState({
+        checking: false,
+        error: null,
+        info,
+      });
+    } catch (error) {
+      setUpdateState((current) => ({
+        ...current,
+        checking: false,
+        error: friendlyError(
+          error,
+          "Failed to check GitHub Releases for updates.",
+        ),
+      }));
+    }
+  }
+
+  async function openUpdateDownload() {
+    if (!updateState.info) {
+      return;
+    }
+
+    try {
+      await window.quickCommand.app.openUpdateDownload(
+        updateState.info.downloadUrl,
+      );
+    } catch (error) {
+      setUpdateState((current) => ({
+        ...current,
+        error: friendlyError(error, "Failed to open the update download."),
+      }));
+    }
+  }
+
   function newSnippet() {
     setEditingId(null);
     setDraft(emptySnippet);
@@ -303,6 +370,7 @@ export function App() {
     onAccessibilityOpen: () =>
       window.quickCommand.settings.openAccessibilitySettings(),
     onAccessibilityPrompt: promptAccessibility,
+    onCheckForUpdates: checkForUpdates,
     onCompleteOnboarding: completeOnboarding,
     onDraftChange: setDraft,
     onImport: () =>
@@ -312,6 +380,7 @@ export function App() {
     onInsert: insertSnippet,
     onInsertText: insertSnippetText,
     onNewSnippet: newSnippet,
+    onOpenUpdateDownload: openUpdateDownload,
     onQueryChange: handleQueryChange,
     onQuit: () => window.quickCommand.app.quit(),
     onRemove: removeSnippet,
@@ -323,6 +392,9 @@ export function App() {
     query: state.query,
     saving: state.saving,
     settings: state.settings,
+    updateChecking: updateState.checking,
+    updateError: updateState.error,
+    updateInfo: updateState.info,
   };
 
   const content = renderScreen(kind, screenProps);
@@ -438,7 +510,9 @@ export function App() {
           <div className="mb-3 rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-3.5 text-[13px] text-yellow-300">
             <div className="flex items-center gap-3">
               <AlertTriangle className="h-4 w-4 text-yellow-400 shrink-0" />
-              <span className="flex-1">Accessibility access is required to paste snippets.</span>
+              <span className="flex-1">
+                Accessibility access is required to paste snippets.
+              </span>
               <Button
                 variant="outline"
                 size="sm"

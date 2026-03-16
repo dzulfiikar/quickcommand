@@ -4,6 +4,7 @@ import {
   type BrowserWindow,
   globalShortcut,
   nativeImage,
+  shell,
   Tray,
 } from "electron";
 
@@ -65,7 +66,12 @@ async function bootstrap(): Promise<void> {
     logFilePath: logger.getLogFilePath(),
   });
 
-  services = createAppServices(app.getPath("userData"));
+  services = createAppServices(app.getPath("userData"), {
+    appVersion: app.getVersion(),
+    openExternal(url) {
+      return shell.openExternal(url);
+    },
+  });
   const settings = await services.settings.get();
   logInfo("bootstrap", "Settings loaded", {
     firstRunComplete: settings.firstRunComplete,
@@ -112,8 +118,21 @@ function registerHandlers(): void {
   });
 
   registerAutomationHandlers({
+    async checkForUpdates() {
+      const result = await services.updates.checkForUpdates();
+      logInfo("updates", "Update check completed", {
+        availability: result.availability,
+        currentVersion: result.currentVersion,
+        latestVersion: result.latestVersion,
+      });
+      return result;
+    },
     hidePalette() {
       windows.palette?.hide();
+    },
+    async openUpdateDownload(url) {
+      logInfo("updates", "Opening update download", { url });
+      await services.updates.openUpdateDownload(url);
     },
     showLibrary() {
       void showLibrary();

@@ -3,6 +3,7 @@ import type {
   SnippetInput,
   SnippetRecord,
 } from "../../../shared/snippet-model";
+import type { AppUpdateInfo } from "../../../shared/update-model";
 
 export type ScreenProps = {
   draft: SnippetInput;
@@ -11,6 +12,7 @@ export type ScreenProps = {
   filtered: SnippetRecord[];
   onAccessibilityOpen(): Promise<void>;
   onAccessibilityPrompt(): Promise<void>;
+  onCheckForUpdates(): Promise<void>;
   onCompleteOnboarding(): Promise<void>;
   onDraftChange(value: SnippetInput): void;
   onExport(): Promise<{ path: string | null }>;
@@ -18,6 +20,7 @@ export type ScreenProps = {
   onInsert(id: string): Promise<void>;
   onInsertText(id: string, text: string): Promise<void>;
   onNewSnippet(): void;
+  onOpenUpdateDownload(): Promise<void>;
   onQueryChange(query: string): void;
   onQuit(): Promise<void>;
   onRemove(id: string): Promise<void>;
@@ -28,4 +31,7 @@ export type ScreenProps = {
   query: string;
   saving: boolean;
   settings: Settings | null;
+  updateChecking: boolean;
+  updateError: string | null;
+  updateInfo: AppUpdateInfo | null;
 };

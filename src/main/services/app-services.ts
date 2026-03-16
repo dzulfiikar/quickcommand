@@ -5,8 +5,15 @@ import { PermissionsService } from "./permissions-service";
 import { SnippetSearchService } from "./search-service";
 import { JsonSettingsStore } from "./settings-store";
 import { JsonSnippetRepository } from "./snippet-repository";
+import { AppUpdateService } from "./update-service";
 
-export function createAppServices(userDataPath: string) {
+export function createAppServices(
+  userDataPath: string,
+  options: {
+    appVersion: string;
+    openExternal(url: string): Promise<void> | void;
+  },
+) {
   return {
     autostart: new AutostartService(),
     paste: new PasteService(),
@@ -18,6 +25,10 @@ export function createAppServices(userDataPath: string) {
     snippets: new JsonSnippetRepository(
       join(userDataPath, "data", "snippets.json"),
     ),
+    updates: new AppUpdateService({
+      currentVersion: options.appVersion,
+      openExternal: options.openExternal,
+    }),
   };
 }
 

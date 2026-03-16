@@ -1,4 +1,6 @@
+import { Download, Upload } from "lucide-react";
 import { memo, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -6,6 +8,8 @@ import { Switch } from "@/components/ui/switch";
 import type { Settings } from "../../../shared/settings-model";
 
 export const SettingsPanel = memo(function SettingsPanel(props: {
+  onExport?(): Promise<{ path: string | null }>;
+  onImport?(): Promise<void>;
   settings: Settings;
   onSaveSettings(patch: Partial<Settings>): Promise<void>;
   showClipboardDelay?: boolean;
@@ -82,6 +86,39 @@ export const SettingsPanel = memo(function SettingsPanel(props: {
           }
         />
       </div>
+      {props.onImport || props.onExport ? (
+        <>
+          <Separator className="bg-border/40" />
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">
+              Snippet data
+            </Label>
+            <div className="flex items-center gap-2">
+              {props.onImport ? (
+                <Button
+                  size="sm"
+                  className="h-8 flex-1 px-3 text-xs gap-1.5 pressable"
+                  onClick={() => void props.onImport?.()}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Import snippets
+                </Button>
+              ) : null}
+              {props.onExport ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="h-8 flex-1 px-3 text-xs gap-1.5 pressable"
+                  onClick={() => void props.onExport?.()}
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  Export snippets
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        </>
+      ) : null}
     </div>
   );
 });

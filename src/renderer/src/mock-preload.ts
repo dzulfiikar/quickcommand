@@ -5,6 +5,7 @@
 import type { InsertResult } from "../../shared/app-api";
 import type { Settings } from "../../shared/settings-model";
 import type { SnippetInput, SnippetRecord } from "../../shared/snippet-model";
+import type { AppUpdateInfo } from "../../shared/update-model";
 
 const sampleSnippets: SnippetRecord[] = [
   {
@@ -45,6 +46,18 @@ const defaultSettings: Settings = {
 };
 
 let settings = { ...defaultSettings };
+let updateInfo: AppUpdateInfo = {
+  availability: "up-to-date",
+  autoInstallSupported: false,
+  checkedAt: new Date().toISOString(),
+  currentVersion: __APP_VERSION__,
+  downloadUrl: "https://github.com/dzulfiikar/quickcommand/releases/latest",
+  latestVersion: __APP_VERSION__,
+  releaseName: `QuickCommand ${__APP_VERSION__}`,
+  releaseNotes: "No newer release is available in the preview environment.",
+  releasePublishedAt: new Date().toISOString(),
+  releaseUrl: "https://github.com/dzulfiikar/quickcommand/releases/latest",
+};
 
 const mockAPI = {
   snippets: {
@@ -121,6 +134,13 @@ const mockAPI = {
     },
   },
   app: {
+    async checkForUpdates(): Promise<AppUpdateInfo> {
+      updateInfo = {
+        ...updateInfo,
+        checkedAt: new Date().toISOString(),
+      };
+      return updateInfo;
+    },
     async showLibrary(): Promise<void> {
       window.location.hash = "#library";
       window.location.reload();
@@ -131,6 +151,9 @@ const mockAPI = {
     },
     async hidePalette(): Promise<void> {
       console.log("[mock] hidePalette");
+    },
+    async openUpdateDownload(url: string): Promise<void> {
+      console.log("[mock] openUpdateDownload", url);
     },
     async quit(): Promise<void> {
       console.log("[mock] quit");

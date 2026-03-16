@@ -1,8 +1,13 @@
 {
   "name": "quickcommand",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "private": true,
   "description": "macOS menubar command and text snippet launcher built with Electron, TypeScript, and Bun.",
+  "homepage": "https://github.com/dzulfiikar/quickcommand",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dzulfiikar/quickcommand.git"
+  },
   "type": "module",
   "main": "./out/main/index.js",
   "scripts": {

@@ -63,9 +63,12 @@ const api: QuickCommandAPI = {
       ipcRenderer.invoke(channels.settingsPromptAccessibility),
   },
   app: {
+    checkForUpdates: () => ipcRenderer.invoke(channels.appCheckForUpdates),
     showLibrary: () => ipcRenderer.invoke(channels.appShowLibrary),
     showOnboarding: () => ipcRenderer.invoke(channels.appShowOnboarding),
     hidePalette: () => ipcRenderer.invoke(channels.appHidePalette),
+    openUpdateDownload: (url) =>
+      ipcRenderer.invoke(channels.appOpenUpdateDownload, url),
     quit: () => ipcRenderer.invoke(channels.appQuit),
     getWindowKind: () => {
       const hash = window.location.hash.replace("#", "");
