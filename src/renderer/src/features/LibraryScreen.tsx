@@ -93,6 +93,30 @@ export function LibraryScreen(props: ScreenProps) {
     setDetailView("about");
   }
 
+  async function handleDeleteSnippet() {
+    if (!props.editingId) {
+      return;
+    }
+
+    const title = props.draft.title.trim() || "this snippet";
+    const confirmed = window.confirm(
+      `Delete "${title}"? This action cannot be undone.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const removed = await props.onRemove(props.editingId);
+    if (!removed) {
+      return;
+    }
+
+    setSelected(null);
+    setDetailView("snippet");
+    props.onNewSnippet();
+  }
+
   const pagination = getLibraryPaginationState(page, props.filtered.length);
   const visibleSnippets = getLibraryPageItems(
     props.filtered,
@@ -306,7 +330,7 @@ export function LibraryScreen(props: ScreenProps) {
 
       {/* ── Detail panel ── */}
       <main className="flex flex-1 flex-col min-w-0 overflow-hidden">
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 min-h-0">
           <div className="p-5 flex flex-col gap-5">
             {/* Param input form overlay */}
             {paramSnippet ? (
@@ -389,11 +413,15 @@ export function LibraryScreen(props: ScreenProps) {
                 {/* Edit / New form */}
                 <div className="rounded-xl border border-border/50 bg-card/60 p-5 flex flex-col gap-3">
                   <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider pb-2 border-b border-border/30">
-                    {selected ? "Edit snippet" : "New snippet"}
+                    {props.editingId ? "Edit snippet" : "New snippet"}
                   </h2>
                   <SnippetForm
+                    deleteDisabled={props.saving}
                     draft={props.draft}
                     onChange={props.onDraftChange}
+                    onDelete={
+                      props.editingId ? handleDeleteSnippet : undefined
+                    }
                     onSubmit={props.onSubmitSnippet}
                     saving={props.saving}
                   />

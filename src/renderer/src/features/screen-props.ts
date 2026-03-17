@@ -23,7 +23,7 @@ export type ScreenProps = {
   onOpenUpdateDownload(): Promise<void>;
   onQueryChange(query: string): void;
   onQuit(): Promise<void>;
-  onRemove(id: string): Promise<void>;
+  onRemove(id: string): Promise<boolean>;
   onSaveSettings(patch: Partial<Settings>): Promise<void>;
   onShowLibrary(): Promise<void>;
   onSubmitSnippet(event: React.FormEvent): Promise<void>;

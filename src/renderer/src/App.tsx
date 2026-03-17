@@ -247,9 +247,18 @@ export function App() {
     }
   }
 
-  async function removeSnippet(id: string) {
-    await window.quickCommand.snippets.remove(id);
-    await refresh(state.query);
+  async function removeSnippet(id: string): Promise<boolean> {
+    try {
+      await window.quickCommand.snippets.remove(id);
+      await refresh(state.query);
+      return true;
+    } catch (error) {
+      setState((current) => ({
+        ...current,
+        error: friendlyError(error, "Failed to delete snippet."),
+      }));
+      return false;
+    }
   }
 
   async function insertSnippet(id: string) {

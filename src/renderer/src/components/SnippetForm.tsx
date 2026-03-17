@@ -18,8 +18,10 @@ function validate(draft: SnippetInput): FieldErrors {
 }
 
 export const SnippetForm = memo(function SnippetForm(props: {
+  deleteDisabled?: boolean;
   draft: SnippetInput;
   onChange(value: SnippetInput): void;
+  onDelete?(): Promise<void>;
   onSubmit(event: React.FormEvent): Promise<void>;
   saving: boolean;
 }) {
@@ -209,9 +211,26 @@ export const SnippetForm = memo(function SnippetForm(props: {
         )}
       </div>
 
-      <Button className="w-full pressable" disabled={props.saving} type="submit">
-        {props.saving ? "Saving…" : "Save snippet"}
-      </Button>
+      <div className="flex items-center gap-2">
+        {props.onDelete ? (
+          <Button
+            className="pressable"
+            disabled={props.deleteDisabled}
+            type="button"
+            variant="destructive"
+            onClick={() => void props.onDelete?.()}
+          >
+            Delete snippet
+          </Button>
+        ) : null}
+        <Button
+          className={props.onDelete ? "flex-1 pressable" : "w-full pressable"}
+          disabled={props.saving}
+          type="submit"
+        >
+          {props.saving ? "Saving…" : "Save snippet"}
+        </Button>
+      </div>
     </form>
   );
 });

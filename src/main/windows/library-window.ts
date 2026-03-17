@@ -7,6 +7,8 @@ export function createLibraryWindow(): BrowserWindow {
     width: 1080,
     height: 760,
     show: false,
+    resizable: false,
+    movable: true,
     backgroundColor: "#0C0E14",
     titleBarStyle: "hiddenInset",
     webPreferences: {
