@@ -93,6 +93,28 @@ bun run build:helper
 bun run package:dir
 ```
 
+#### Browser preview routes
+
+`bun run dev:browser` boots Vite at `http://localhost:5199/` with the in-memory
+mock preload (`src/renderer/src/mock-preload.ts`) in place of the Electron API.
+The renderer chooses which surface to render from the URL hash:
+
+| Window | URL |
+|---|---|
+| Library (default) | `http://localhost:5199/` or `http://localhost:5199/#library` |
+| Palette | `http://localhost:5199/#palette` |
+| Onboarding | `http://localhost:5199/#onboarding` |
+| Tray popover | `http://localhost:5199/#tray` |
+
+Notes:
+
+- Tray and Palette are sized for native popovers and centered overlays, so they
+  appear small against the full browser viewport.
+- Onboarding's final "Open library" action calls `window.close()`, which the
+  browser ignores; step navigation still works.
+- Accessibility, hotkey registration, and Cmd+V paste are mocked. UI states
+  render, but no real OS-level action is triggered.
+
 ### Contribution Guide
 
 If you contribute to QuickCommand:
