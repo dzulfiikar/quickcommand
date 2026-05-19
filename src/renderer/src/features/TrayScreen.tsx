@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import {
-  ClipboardPaste,
   Info,
   Library,
   LogOut,
@@ -9,7 +8,13 @@ import {
   Search,
   Trash2,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import {
+  type KeyboardEvent as ReactKeyboardEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { fadeIn } from "@/lib/motion";
@@ -17,6 +22,7 @@ import {
   getSnippetPreviewParts,
   getSnippetPreviewText,
 } from "@/lib/snippet-preview";
+import { cn } from "@/lib/utils";
 import {
   extractParams,
   hasParams,
@@ -49,7 +55,9 @@ export function TrayScreen(props: ScreenProps) {
   const [showEditForm, setShowEditForm] = useState(false);
   const [page, setPage] = useState(0);
   const [query, setQuery] = useState("");
+  const [activeIndex, setActiveIndex] = useState(0);
   const queryInputRef = useRef<HTMLInputElement | null>(null);
+  const listRef = useRef<HTMLUListElement | null>(null);
 
   useEffect(() => {
     queryInputRef.current?.focus();
@@ -72,6 +80,21 @@ export function TrayScreen(props: ScreenProps) {
       setPage(clampedPage);
     }
   }, [page, props.filtered.length]);
+
+  const pagination = getTrayPaginationState(page, props.filtered.length);
+  const visibleSnippets = useMemo(
+    () =>
+      getTrayPageItems(props.filtered, pagination.page, pagination.pageSize),
+    [props.filtered, pagination.page, pagination.pageSize],
+  );
+
+  useEffect(() => {
+    setActiveIndex((current) =>
+      visibleSnippets.length === 0
+        ? 0
+        : Math.min(current, visibleSnippets.length - 1),
+    );
+  }, [visibleSnippets.length]);
 
   function handleInsert(id: string) {
     const snippet = props.filtered.find((item) => item.id === id);
@@ -102,6 +125,93 @@ export function TrayScreen(props: ScreenProps) {
     const finalText = substituteParams(paramSnippet.value, values);
     setParamSnippet(null);
     void props.onInsertText(paramSnippet.id, finalText);
+  }
+
+  function focusRow(index: number) {
+    if (visibleSnippets.length === 0) return;
+    const safe = Math.max(0, Math.min(visibleSnippets.length - 1, index));
+    setActiveIndex(safe);
+    const row = listRef.current?.querySelectorAll<HTMLButtonElement>(
+      "button[data-tray-row]",
+    )?.[safe];
+    row?.focus();
+  }
+
+  function handleSearchKeyDown(event: ReactKeyboardEvent<HTMLInputElement>) {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      focusRow(0);
+      return;
+    }
+    if (event.key === "Enter" && visibleSnippets.length > 0) {
+      event.preventDefault();
+      handleInsert(visibleSnippets[activeIndex]?.id ?? visibleSnippets[0].id);
+      return;
+    }
+    if (event.key === "Escape" && query.length > 0) {
+      event.preventDefault();
+      setQuery("");
+      setPage(0);
+    }
+  }
+
+  function handleRowKeyDown(
+    event: ReactKeyboardEvent<HTMLButtonElement>,
+    snippet: SnippetRecord,
+    index: number,
+  ) {
+    if (event.key === "ArrowDown" || event.key === "j") {
+      event.preventDefault();
+      if (index < visibleSnippets.length - 1) {
+        focusRow(index + 1);
+      } else if (pagination.page < pagination.totalPages - 1) {
+        setPage(pagination.page + 1);
+        setActiveIndex(0);
+      }
+      return;
+    }
+    if (event.key === "ArrowUp" || event.key === "k") {
+      event.preventDefault();
+      if (index > 0) {
+        focusRow(index - 1);
+      } else if (pagination.page > 0) {
+        setPage(pagination.page - 1);
+        setActiveIndex(pagination.pageSize - 1);
+      } else {
+        queryInputRef.current?.focus();
+      }
+      return;
+    }
+    if (event.key === "Enter") {
+      event.preventDefault();
+      handleInsert(snippet.id);
+      return;
+    }
+    if (event.key === "ArrowLeft" || event.key === "h") {
+      if (pagination.page > 0) {
+        event.preventDefault();
+        setPage(pagination.page - 1);
+        setActiveIndex(0);
+      }
+      return;
+    }
+    if (event.key === "ArrowRight" || event.key === "l") {
+      if (pagination.page < pagination.totalPages - 1) {
+        event.preventDefault();
+        setPage(pagination.page + 1);
+        setActiveIndex(0);
+      }
+      return;
+    }
+    if ((event.key === "e" || event.key === "E") && !event.metaKey) {
+      event.preventDefault();
+      handleEdit(snippet);
+      return;
+    }
+    if (event.key === "Backspace" || event.key === "Delete") {
+      event.preventDefault();
+      void props.onRemove(snippet.id);
+    }
   }
 
   if (showAbout) {
@@ -177,13 +287,6 @@ export function TrayScreen(props: ScreenProps) {
     );
   }
 
-  const pagination = getTrayPaginationState(page, props.filtered.length);
-  const visibleSnippets = getTrayPageItems(
-    props.filtered,
-    pagination.page,
-    pagination.pageSize,
-  );
-
   return (
     <TrayShell>
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
@@ -201,9 +304,14 @@ export function TrayScreen(props: ScreenProps) {
           onChange={(event) => {
             setQuery(event.target.value);
             setPage(0);
+            setActiveIndex(0);
           }}
+          onKeyDown={handleSearchKeyDown}
         />
-        <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
+        <span
+          aria-label={`${props.filtered.length} snippets`}
+          className="font-mono text-[11px] tabular-nums text-muted-foreground"
+        >
           {props.filtered.length}
         </span>
         <Button
@@ -222,104 +330,139 @@ export function TrayScreen(props: ScreenProps) {
       <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
         {visibleSnippets.length > 0 ? (
           <ScrollArea className="flex-1 min-h-0">
-            <ul className="flex flex-col gap-1 p-2">
-              {visibleSnippets.map((snippet) => (
-                <li
-                  key={snippet.id}
-                  className="list-item group flex items-center gap-2 px-3 py-2.5"
-                >
-                  <button
-                    type="button"
-                    className="min-w-0 flex-1 cursor-pointer text-left"
-                    onClick={() => handleInsert(snippet.id)}
+            <ul
+              ref={listRef}
+              className="flex flex-col gap-1 p-2"
+              role="listbox"
+              aria-label="Snippets"
+            >
+              {visibleSnippets.map((snippet, index) => {
+                const isActive = index === activeIndex;
+                return (
+                  <li
+                    key={snippet.id}
+                    className={cn(
+                      "list-item group relative flex items-center gap-2 px-3",
+                      isActive && "list-item-active",
+                    )}
                   >
-                    <p className="snippet-preview-title text-[13.5px] font-medium text-foreground">
-                      {getSnippetPreviewText(snippet.title)}
-                    </p>
-                    <SnippetPreviewLine
-                      parts={getSnippetPreviewParts(snippet.value)}
-                      className="snippet-preview-value mt-0.5 block font-mono text-[11.5px] text-muted-foreground"
-                    />
-                  </button>
-                  <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
-                    <Button
-                      aria-label={`Edit ${snippet.title}`}
-                      variant="ghost"
-                      size="icon-xs"
-                      className="size-8"
-                      onClick={() => handleEdit(snippet)}
+                    <button
+                      type="button"
+                      data-tray-row
+                      role="option"
+                      aria-selected={isActive}
+                      tabIndex={isActive ? 0 : -1}
+                      className="flex h-11 min-w-0 flex-1 cursor-pointer items-center gap-3 text-left outline-none"
+                      onClick={() => handleInsert(snippet.id)}
+                      onFocus={() => setActiveIndex(index)}
+                      onMouseEnter={() => setActiveIndex(index)}
+                      onKeyDown={(event) =>
+                        handleRowKeyDown(event, snippet, index)
+                      }
                     >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      aria-label={`Delete ${snippet.title}`}
-                      variant="ghost"
-                      size="icon-xs"
-                      className="size-8 text-destructive hover:text-destructive"
-                      onClick={() => void props.onRemove(snippet.id)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                  {snippet.useCount > 0 ? (
-                    <span className="font-mono text-[10.5px] tabular-nums text-muted-foreground">
-                      {snippet.useCount}×
-                    </span>
-                  ) : null}
-                  <Button
-                    aria-label={`Paste ${snippet.title}`}
-                    size="sm"
-                    variant="outline"
-                    className="h-8 gap-1.5 px-3"
-                    onClick={() => handleInsert(snippet.id)}
-                  >
-                    <ClipboardPaste className="h-3.5 w-3.5" />
-                    Paste
-                  </Button>
-                </li>
-              ))}
+                      <p className="snippet-preview-title min-w-0 shrink-0 max-w-[40%] text-[13.5px] font-medium text-foreground">
+                        {getSnippetPreviewText(snippet.title)}
+                      </p>
+                      <SnippetPreviewLine
+                        parts={getSnippetPreviewParts(snippet.value)}
+                        className="snippet-preview-value block min-w-0 flex-1 font-mono text-[11.5px] text-muted-foreground"
+                      />
+                      {snippet.useCount > 0 ? (
+                        <span className="shrink-0 font-mono text-[10.5px] tabular-nums text-muted-foreground">
+                          {snippet.useCount}×
+                        </span>
+                      ) : null}
+                    </button>
+                    <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                      <Button
+                        aria-label={`Edit ${snippet.title}`}
+                        variant="ghost"
+                        size="icon-sm"
+                        tabIndex={-1}
+                        onClick={() => handleEdit(snippet)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        aria-label={`Delete ${snippet.title}`}
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-destructive hover:text-destructive"
+                        tabIndex={-1}
+                        onClick={() => void props.onRemove(snippet.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           </ScrollArea>
         ) : (
-          <div className="flex flex-1 flex-col items-center justify-center gap-1 px-4 py-10 text-center">
+          <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 py-10 text-center">
             <p className="text-[14px] font-semibold text-foreground">
               {query ? "Nothing matches" : "No snippets yet"}
             </p>
-            <p className="text-[13px] text-muted-foreground">
-              {query
-                ? "Try a shorter or different word."
-                : "Use the actions below to create one."}
+            <p className="text-[12px] text-muted-foreground">
+              {query ? (
+                <>
+                  Try a shorter word, or press <kbd className="kbd">Esc</kbd> to clear.
+                </>
+              ) : (
+                <>
+                  Press <kbd className="kbd">+</kbd> above to create your first one.
+                </>
+              )}
             </p>
           </div>
         )}
 
-        {pagination.totalPages > 1 ? (
-          <div className="flex items-center justify-center gap-3 border-t border-border px-4 py-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={pagination.page === 0}
-              onClick={() => setPage((current) => Math.max(0, current - 1))}
-            >
-              Prev
-            </Button>
-            <span className="font-mono text-[12px] tabular-nums text-muted-foreground">
-              {pagination.page + 1} / {pagination.totalPages}
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={pagination.page >= pagination.totalPages - 1}
-              onClick={() =>
-                setPage((current) =>
-                  Math.min(pagination.totalPages - 1, current + 1),
-                )
-              }
-            >
-              Next
-            </Button>
+        <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-2 text-[11px] text-muted-foreground">
+          <div className="flex items-center gap-3">
+            {visibleSnippets.length > 0 ? (
+              <>
+                <span className="inline-flex items-center gap-1.5">
+                  <kbd className="kbd">↵</kbd>
+                  <span>Paste</span>
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <kbd className="kbd">E</kbd>
+                  <span>Edit</span>
+                </span>
+              </>
+            ) : null}
           </div>
-        ) : null}
+          {pagination.totalPages > 1 ? (
+            <div className="flex items-center gap-1">
+              <Button
+                aria-label="Previous page"
+                variant="ghost"
+                size="icon-sm"
+                disabled={pagination.page === 0}
+                onClick={() => setPage((current) => Math.max(0, current - 1))}
+              >
+                <span aria-hidden="true">←</span>
+              </Button>
+              <span className="font-mono tabular-nums">
+                {pagination.page + 1} / {pagination.totalPages}
+              </span>
+              <Button
+                aria-label="Next page"
+                variant="ghost"
+                size="icon-sm"
+                disabled={pagination.page >= pagination.totalPages - 1}
+                onClick={() =>
+                  setPage((current) =>
+                    Math.min(pagination.totalPages - 1, current + 1),
+                  )
+                }
+              >
+                <span aria-hidden="true">→</span>
+              </Button>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <footer className="grid grid-cols-3 gap-1 border-t border-border p-2">
