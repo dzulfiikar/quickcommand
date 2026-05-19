@@ -1,5 +1,5 @@
 import { Plus, X } from "lucide-react";
-import { memo, useRef, useState } from "react";
+import { memo, useId, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,19 +12,25 @@ type FieldErrors = { title?: string; value?: string };
 
 function validate(draft: SnippetInput): FieldErrors {
   const errors: FieldErrors = {};
-  if (!draft.title.trim()) errors.title = "Title is required";
-  if (!draft.value.trim()) errors.value = "Command text is required";
+  if (!draft.title.trim()) errors.title = "Add a title so you can find it later";
+  if (!draft.value.trim()) errors.value = "Add the text you want to paste";
   return errors;
 }
 
 export const SnippetForm = memo(function SnippetForm(props: {
   deleteDisabled?: boolean;
+  deleteConfirming?: boolean;
   draft: SnippetInput;
   onChange(value: SnippetInput): void;
   onDelete?(): Promise<void>;
+  onConfirmDelete?(): Promise<void>;
+  onCancelDelete?(): void;
   onSubmit(event: React.FormEvent): Promise<void>;
   saving: boolean;
 }) {
+  const titleId = useId();
+  const valueId = useId();
+  const paramId = useId();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [paramName, setParamName] = useState("");
   const [showParamInput, setShowParamInput] = useState(false);
@@ -32,11 +38,11 @@ export const SnippetForm = memo(function SnippetForm(props: {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   const detectedParams = extractParams(props.draft.value);
+  const confirming = props.deleteConfirming ?? false;
 
   function handleBlur(field: "title" | "value") {
     setTouched((prev) => ({ ...prev, [field]: true }));
-    const fieldErrors = validate(props.draft);
-    setErrors(fieldErrors);
+    setErrors(validate(props.draft));
   }
 
   function handleSubmit(event: React.FormEvent) {
@@ -84,21 +90,20 @@ export const SnippetForm = memo(function SnippetForm(props: {
   const valueError = touched.value ? errors.value : undefined;
 
   return (
-    <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-      <div className="space-y-1.5">
+    <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+      <div className="flex flex-col gap-1.5">
         <Label
-          className={`text-xs ${titleError ? "text-destructive" : "text-muted-foreground"}`}
+          htmlFor={titleId}
+          className={`text-[12px] ${titleError ? "text-destructive" : "text-foreground"}`}
         >
           Title
         </Label>
         <Input
-          placeholder="e.g. Git commit amend"
+          id={titleId}
+          placeholder="Git commit amend"
           value={props.draft.title}
-          className={`h-9 bg-background/50 ${
-            titleError
-              ? "border-destructive/50 focus-visible:ring-destructive/30"
-              : "border-border/60"
-          }`}
+          aria-invalid={titleError ? true : undefined}
+          aria-describedby={titleError ? `${titleId}-error` : undefined}
           onChange={(event) =>
             props.onChange({
               ...props.draft,
@@ -107,25 +112,36 @@ export const SnippetForm = memo(function SnippetForm(props: {
           }
           onBlur={() => handleBlur("title")}
         />
-        {titleError && (
-          <p className="text-[11px] text-destructive mt-1">{titleError}</p>
-        )}
+        {titleError ? (
+          <p
+            id={`${titleId}-error`}
+            className="text-[11px] text-destructive-foreground"
+          >
+            {titleError}
+          </p>
+        ) : null}
       </div>
-      <div className="space-y-1.5">
-        <Label
-          className={`text-xs ${valueError ? "text-destructive" : "text-muted-foreground"}`}
-        >
-          Command / text
-        </Label>
+
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center justify-between">
+          <Label
+            htmlFor={valueId}
+            className={`text-[12px] ${valueError ? "text-destructive" : "text-foreground"}`}
+          >
+            Snippet text
+          </Label>
+          <p className="field-note">
+            Wrap a placeholder like <code className="font-mono text-foreground/80">{"{name}"}</code> to fill it before paste.
+          </p>
+        </div>
         <Textarea
+          id={valueId}
           ref={textareaRef}
-          placeholder="e.g. git commit --amend --no-edit"
+          placeholder="git commit --amend --no-edit"
           rows={4}
-          className={`bg-background/50 font-mono text-[13px] resize-y max-h-[200px] overflow-y-auto ${
-            valueError
-              ? "border-destructive/50 focus-visible:ring-destructive/30"
-              : "border-border/60"
-          }`}
+          className="max-h-[260px] resize-y overflow-y-auto font-mono text-[13px] leading-relaxed"
+          aria-invalid={valueError ? true : undefined}
+          aria-describedby={valueError ? `${valueId}-error` : undefined}
           value={props.draft.value}
           onChange={(event) =>
             props.onChange({
@@ -135,18 +151,28 @@ export const SnippetForm = memo(function SnippetForm(props: {
           }
           onBlur={() => handleBlur("value")}
         />
-        {valueError && (
-          <p className="text-[11px] text-destructive mt-1">{valueError}</p>
-        )}
+        {valueError ? (
+          <p
+            id={`${valueId}-error`}
+            className="text-[11px] text-destructive-foreground"
+          >
+            {valueError}
+          </p>
+        ) : null}
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
         {showParamInput ? (
-          <div className="flex items-center gap-1.5">
+          <div className="surface-inset flex items-center gap-1.5 px-2 py-1.5">
+            <Label htmlFor={paramId} className="sr-only">
+              Parameter name
+            </Label>
             <Input
-              className="w-28 h-7 text-xs font-mono bg-background/50 border-border/60"
+              id={paramId}
+              aria-label="Parameter name"
+              className="h-8 w-32 font-mono text-[12px]"
               type="text"
-              placeholder="param name"
+              placeholder="name"
               value={paramName}
               autoFocus
               onChange={(e) => setParamName(e.target.value.replace(/\s/g, "_"))}
@@ -163,7 +189,7 @@ export const SnippetForm = memo(function SnippetForm(props: {
             />
             <Button
               size="sm"
-              className="h-7 px-2 text-xs pressable"
+              className="h-8 px-3"
               type="button"
               disabled={!paramName.trim()}
               onClick={insertParam}
@@ -172,8 +198,9 @@ export const SnippetForm = memo(function SnippetForm(props: {
             </Button>
             <Button
               variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0"
+              size="icon-xs"
+              className="size-8"
+              aria-label="Cancel parameter"
               type="button"
               onClick={() => {
                 setShowParamInput(false);
@@ -187,49 +214,76 @@ export const SnippetForm = memo(function SnippetForm(props: {
           <Button
             variant="outline"
             size="sm"
-            className="h-7 px-2.5 text-xs gap-1"
+            className="gap-1"
             type="button"
             onClick={() => setShowParamInput(true)}
           >
             <Plus className="h-3 w-3" />
-            Add Param
+            Add placeholder
           </Button>
         )}
 
-        {detectedParams.length > 0 && (
+        {detectedParams.length > 0 ? (
           <div className="flex flex-wrap gap-1">
             {detectedParams.map((p) => (
               <Badge
                 key={p}
                 variant="outline"
-                className="font-mono text-[10.5px] px-1.5 py-0 text-primary border-primary/30 bg-primary/5"
+                className="rounded-md px-1.5 py-0.5 font-mono text-[10.5px]"
               >
                 {`{${p}}`}
               </Badge>
             ))}
           </div>
-        )}
+        ) : null}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
         {props.onDelete ? (
-          <Button
-            className="pressable"
-            disabled={props.deleteDisabled}
-            type="button"
-            variant="destructive"
-            onClick={() => void props.onDelete?.()}
-          >
-            Delete snippet
-          </Button>
+          confirming ? (
+            <div className="flex flex-1 items-center gap-2 rounded-md border px-3 py-2 text-[12px]" style={{ background: "var(--error-background)", borderColor: "var(--error-border)", color: "var(--error-foreground)" }}>
+              <span className="flex-1">
+                Delete this snippet? It cannot be undone.
+              </span>
+              <Button
+                size="sm"
+                variant="ghost"
+                type="button"
+                onClick={() => props.onCancelDelete?.()}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                type="button"
+                disabled={props.deleteDisabled}
+                onClick={() => void props.onConfirmDelete?.()}
+              >
+                Delete snippet
+              </Button>
+            </div>
+          ) : (
+            <Button
+              disabled={props.deleteDisabled}
+              type="button"
+              variant="ghost"
+              className="text-destructive hover:text-destructive"
+              onClick={() => void props.onDelete?.()}
+            >
+              Delete snippet
+            </Button>
+          )
         ) : null}
-        <Button
-          className={props.onDelete ? "flex-1 pressable" : "w-full pressable"}
-          disabled={props.saving}
-          type="submit"
-        >
-          {props.saving ? "Saving…" : "Save snippet"}
-        </Button>
+        {confirming ? null : (
+          <Button
+            className={props.onDelete ? "" : "min-w-36"}
+            disabled={props.saving}
+            type="submit"
+          >
+            {props.saving ? "Saving…" : "Save snippet"}
+          </Button>
+        )}
       </div>
     </form>
   );

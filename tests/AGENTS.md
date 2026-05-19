@@ -1,3 +1,5 @@
+<!-- Parent: ../AGENTS.md -->
+
 # Tests
 
 ## Package Identity

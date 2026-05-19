@@ -1,3 +1,5 @@
+<!-- Parent: ../AGENTS.md -->
+
 # Native Helper
 
 ## Directory Identity

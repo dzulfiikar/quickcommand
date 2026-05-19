@@ -13,7 +13,10 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { fadeIn } from "@/lib/motion";
-import { getSnippetPreviewText } from "@/lib/snippet-preview";
+import {
+  getSnippetPreviewParts,
+  getSnippetPreviewText,
+} from "@/lib/snippet-preview";
 import {
   extractParams,
   hasParams,
@@ -23,6 +26,7 @@ import type { SnippetRecord } from "../../../shared/snippet-model";
 import { AboutPanel } from "../components/AboutPanel";
 import { ParamInputForm } from "../components/ParamInputForm";
 import { SnippetForm } from "../components/SnippetForm";
+import { SnippetPreviewLine } from "../components/SnippetPreviewLine";
 import type { ScreenProps } from "./screen-props";
 import { getTrayPageItems, getTrayPaginationState } from "./tray-pagination";
 
@@ -32,7 +36,7 @@ function TrayShell(props: { children: React.ReactNode }) {
       variants={fadeIn}
       initial="hidden"
       animate="visible"
-      className="glass h-full min-h-0 flex flex-col overflow-hidden"
+      className="surface flex h-full min-h-0 flex-col overflow-hidden"
     >
       {props.children}
     </motion.div>
@@ -56,7 +60,7 @@ export function TrayScreen(props: ScreenProps) {
       props.onQueryChange(query);
     }, 120);
     return () => clearTimeout(timer);
-  }, [query, props.onQueryChange]);
+  }, [props.onQueryChange, query]);
 
   useEffect(() => {
     const { page: clampedPage } = getTrayPaginationState(
@@ -70,12 +74,13 @@ export function TrayScreen(props: ScreenProps) {
   }, [page, props.filtered.length]);
 
   function handleInsert(id: string) {
-    const snippet = props.filtered.find((s) => s.id === id);
+    const snippet = props.filtered.find((item) => item.id === id);
     if (snippet && hasParams(snippet.value)) {
       setParamSnippet(snippet);
-    } else {
-      void props.onInsert(id);
+      return;
     }
+
+    void props.onInsert(id);
   }
 
   function handleEdit(snippet: SnippetRecord) {
@@ -90,7 +95,10 @@ export function TrayScreen(props: ScreenProps) {
   }
 
   function handleParamSubmit(values: Record<string, string>) {
-    if (!paramSnippet) return;
+    if (!paramSnippet) {
+      return;
+    }
+
     const finalText = substituteParams(paramSnippet.value, values);
     setParamSnippet(null);
     void props.onInsertText(paramSnippet.id, finalText);
@@ -100,7 +108,7 @@ export function TrayScreen(props: ScreenProps) {
     return (
       <TrayShell>
         <ScrollArea className="flex-1 min-h-0">
-          <div className="p-4">
+          <div className="p-5">
             <AboutPanel
               onCheckForUpdates={props.onCheckForUpdates}
               onClose={() => setShowAbout(false)}
@@ -119,7 +127,7 @@ export function TrayScreen(props: ScreenProps) {
     return (
       <TrayShell>
         <ScrollArea className="flex-1 min-h-0">
-          <div className="p-4">
+          <div className="p-5">
             <ParamInputForm
               params={extractParams(paramSnippet.value)}
               snippetTitle={paramSnippet.title}
@@ -136,21 +144,25 @@ export function TrayScreen(props: ScreenProps) {
     return (
       <TrayShell>
         <ScrollArea className="flex-1 min-h-0">
-          <div className="p-4 flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-foreground">
-                {props.editingId ? "Edit Snippet" : "New Snippet"}
-              </h3>
+          <div className="flex flex-col gap-5 p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <p className="section-label">
+                  {props.editingId ? "Editing" : "New"}
+                </p>
+                <h2 className="text-[17px] font-semibold tracking-[-0.005em] text-foreground">
+                  {props.editingId ? "Edit snippet" : "Save it once, paste it forever"}
+                </h2>
+              </div>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 text-xs text-muted-foreground"
                 onClick={() => {
                   setShowEditForm(false);
                   props.onNewSnippet();
                 }}
               >
-                Cancel
+                Close
               </Button>
             </div>
             <SnippetForm
@@ -174,11 +186,15 @@ export function TrayScreen(props: ScreenProps) {
 
   return (
     <TrayShell>
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-border/30 shrink-0">
-        <Search className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
+        <Search
+          className="h-4 w-4 shrink-0 text-muted-foreground"
+          aria-hidden="true"
+        />
         <input
-          className="flex-1 bg-transparent text-[14px] text-foreground placeholder:text-muted-foreground/60 outline-none"
-          placeholder="Search…"
+          aria-label="Search snippets"
+          className="flex-1 bg-transparent text-[14px] text-foreground placeholder:text-muted-foreground outline-none"
+          placeholder="Search snippets"
           ref={queryInputRef}
           type="text"
           value={query}
@@ -187,95 +203,112 @@ export function TrayScreen(props: ScreenProps) {
             setPage(0);
           }}
         />
-      </div>
+        <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
+          {props.filtered.length}
+        </span>
+        <Button
+          aria-label="Create a new snippet"
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => {
+            props.onNewSnippet();
+            setShowEditForm(true);
+          }}
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </header>
 
-      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-1.5 shrink-0">
-          <span className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-widest">
-            Snippets
-          </span>
-          <span className="text-[10px] font-mono text-muted-foreground/50 tabular-nums">
-            {props.filtered.length}
-          </span>
-        </div>
-
+      <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
         {visibleSnippets.length > 0 ? (
           <ScrollArea className="flex-1 min-h-0">
-            <div className="py-1">
+            <ul className="flex flex-col gap-1 p-2">
               {visibleSnippets.map((snippet) => (
-                <div
+                <li
                   key={snippet.id}
-                  className="group pressable flex items-center gap-3 px-4 py-2 hover:bg-accent/30 transition-colors"
+                  className="list-item group flex items-center gap-2 px-3 py-2.5"
                 >
-                  <div className="flex-1 min-w-0">
-                    <p className="snippet-preview-title text-[13px] font-medium text-foreground leading-tight">
+                  <button
+                    type="button"
+                    className="min-w-0 flex-1 cursor-pointer text-left"
+                    onClick={() => handleInsert(snippet.id)}
+                  >
+                    <p className="snippet-preview-title text-[13.5px] font-medium text-foreground">
                       {getSnippetPreviewText(snippet.title)}
                     </p>
-                    <p className="snippet-preview-value text-[10.5px] font-mono text-foreground/50 mt-0.5">
-                      {getSnippetPreviewText(snippet.value)}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    {snippet.useCount > 0 && (
-                      <span className="text-[10px] font-mono text-muted-foreground/50 tabular-nums mr-1">
-                        {snippet.useCount}×
-                      </span>
-                    )}
-                    <button
-                      type="button"
-                      className="p-1 rounded hover:bg-accent/50 text-muted-foreground/70 hover:text-foreground transition-colors opacity-0 group-hover:opacity-100"
+                    <SnippetPreviewLine
+                      parts={getSnippetPreviewParts(snippet.value)}
+                      className="snippet-preview-value mt-0.5 block font-mono text-[11.5px] text-muted-foreground"
+                    />
+                  </button>
+                  <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                    <Button
+                      aria-label={`Edit ${snippet.title}`}
+                      variant="ghost"
+                      size="icon-xs"
+                      className="size-8"
                       onClick={() => handleEdit(snippet)}
-                      title="Edit"
                     >
-                      <Pencil className="h-3 w-3" />
-                    </button>
-                    <button
-                      type="button"
-                      className="p-1 rounded hover:bg-destructive/10 text-muted-foreground/70 hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      aria-label={`Delete ${snippet.title}`}
+                      variant="ghost"
+                      size="icon-xs"
+                      className="size-8 text-destructive hover:text-destructive"
                       onClick={() => void props.onRemove(snippet.id)}
-                      title="Delete"
                     >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                    <button
-                      type="button"
-                      className="pressable ml-0.5 px-2 py-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary text-[11px] font-medium transition-colors flex items-center gap-1"
-                      onClick={() => handleInsert(snippet.id)}
-                    >
-                      <ClipboardPaste className="h-3 w-3" />
-                      Paste
-                    </button>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
-                </div>
+                  {snippet.useCount > 0 ? (
+                    <span className="font-mono text-[10.5px] tabular-nums text-muted-foreground">
+                      {snippet.useCount}×
+                    </span>
+                  ) : null}
+                  <Button
+                    aria-label={`Paste ${snippet.title}`}
+                    size="sm"
+                    variant="outline"
+                    className="h-8 gap-1.5 px-3"
+                    onClick={() => handleInsert(snippet.id)}
+                  >
+                    <ClipboardPaste className="h-3.5 w-3.5" />
+                    Paste
+                  </Button>
+                </li>
               ))}
-            </div>
+            </ul>
           </ScrollArea>
         ) : (
-          <div className="flex-1 min-h-0 flex items-center justify-center py-8 text-center">
-            <p className="text-[12.5px] text-muted-foreground/60">
-              {query ? "No matches" : "No snippets yet"}
+          <div className="flex flex-1 flex-col items-center justify-center gap-1 px-4 py-10 text-center">
+            <p className="text-[14px] font-semibold text-foreground">
+              {query ? "Nothing matches" : "No snippets yet"}
+            </p>
+            <p className="text-[13px] text-muted-foreground">
+              {query
+                ? "Try a shorter or different word."
+                : "Use the actions below to create one."}
             </p>
           </div>
         )}
 
-        {pagination.totalPages > 1 && (
-          <div className="flex items-center justify-center gap-3 px-4 py-2 border-t border-border/20 bg-muted/10 shrink-0">
+        {pagination.totalPages > 1 ? (
+          <div className="flex items-center justify-center gap-3 border-t border-border px-4 py-2">
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-3 text-[11px]"
               disabled={pagination.page === 0}
               onClick={() => setPage((current) => Math.max(0, current - 1))}
             >
               Prev
             </Button>
-            <span className="text-[10.5px] font-mono text-muted-foreground/60 tabular-nums">
+            <span className="font-mono text-[12px] tabular-nums text-muted-foreground">
               {pagination.page + 1} / {pagination.totalPages}
             </span>
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-3 text-[11px]"
               disabled={pagination.page >= pagination.totalPages - 1}
               onClick={() =>
                 setPage((current) =>
@@ -286,51 +319,38 @@ export function TrayScreen(props: ScreenProps) {
               Next
             </Button>
           </div>
-        )}
+        ) : null}
       </div>
 
-      <div className="border-t border-border/30 py-1 shrink-0">
-        <div className="px-4 py-1.5">
-          <span className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-widest">
-            Actions
-          </span>
-        </div>
+      <footer className="grid grid-cols-3 gap-1 border-t border-border p-2">
         <button
-          className="pressable flex items-center gap-2.5 w-full text-left px-4 py-2 text-[13px] font-medium text-foreground hover:bg-accent/30 transition-colors"
-          type="button"
-          onClick={() => {
-            props.onNewSnippet();
-            setShowEditForm(true);
-          }}
-        >
-          <Plus className="h-3.5 w-3.5 text-primary/60" />
-          New Snippet
-        </button>
-        <button
-          className="pressable flex items-center gap-2.5 w-full text-left px-4 py-2 text-[13px] font-medium text-foreground hover:bg-accent/30 transition-colors"
+          className="list-item flex items-center gap-2 px-3 py-3 text-left text-[13px] font-medium text-foreground"
           type="button"
           onClick={() => void props.onShowLibrary()}
         >
-          <Library className="h-3.5 w-3.5 text-muted-foreground/60" />
-          Open Library
+          <Library
+            className="h-4 w-4 text-muted-foreground"
+            aria-hidden="true"
+          />
+          Library
         </button>
         <button
-          className="pressable flex items-center gap-2.5 w-full text-left px-4 py-2 text-[13px] font-medium text-foreground hover:bg-accent/30 transition-colors"
+          className="list-item flex items-center gap-2 px-3 py-3 text-left text-[13px] font-medium text-foreground"
           type="button"
           onClick={() => setShowAbout(true)}
         >
-          <Info className="h-3.5 w-3.5 text-muted-foreground/60" />
+          <Info className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           About
         </button>
         <button
-          className="pressable flex items-center gap-2.5 w-full text-left px-4 py-2 text-[13px] font-medium text-destructive/70 hover:bg-destructive/5 transition-colors"
+          className="list-item flex items-center gap-2 px-3 py-3 text-left text-[13px] font-medium text-destructive"
           type="button"
           onClick={() => void props.onQuit()}
         >
-          <LogOut className="h-3.5 w-3.5" />
+          <LogOut className="h-4 w-4" aria-hidden="true" />
           Quit
         </button>
-      </div>
+      </footer>
     </TrayShell>
   );
 }

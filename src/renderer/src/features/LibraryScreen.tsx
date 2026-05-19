@@ -7,15 +7,26 @@ import {
   Plus,
   Settings,
   Shield,
+  ShieldCheck,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  type KeyboardEvent as ReactKeyboardEvent,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { fadeIn } from "@/lib/motion";
-import { getSnippetPreviewText } from "@/lib/snippet-preview";
+import {
+  getSnippetPreviewParts,
+  getSnippetPreviewText,
+} from "@/lib/snippet-preview";
+import { cn } from "@/lib/utils";
 import {
   extractParams,
   hasParams,
@@ -27,6 +38,7 @@ import { ParamInputForm } from "../components/ParamInputForm";
 import { SearchBar } from "../components/SearchBar";
 import { SettingsPanel } from "../components/SettingsPanel";
 import { SnippetForm } from "../components/SnippetForm";
+import { SnippetPreviewLine } from "../components/SnippetPreviewLine";
 import type { ScreenProps } from "./screen-props";
 import {
   getLibraryPageForItemId,
@@ -42,12 +54,13 @@ export function LibraryScreen(props: ScreenProps) {
   const [selected, setSelected] = useState<SnippetRecord | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [detailView, setDetailView] = useState<DetailView>("snippet");
-
-  useEffect(() => {
-    if (props.query !== undefined) {
-      setPage(0);
-    }
-  }, [props.query]);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const settingsTitleId = useId();
+  const settingsDescriptionId = useId();
+  const settingsDialogRef = useRef<HTMLDivElement>(null);
+  const settingsTriggerRef = useRef<HTMLButtonElement>(null);
+  const closeSettingsRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const { page: clampedPage } = getLibraryPaginationState(
@@ -60,17 +73,102 @@ export function LibraryScreen(props: ScreenProps) {
     }
   }, [page, props.filtered.length]);
 
+  useEffect(() => {
+    setConfirmingDelete(false);
+  }, [props.editingId]);
+
+  useEffect(() => {
+    if (detailView !== "snippet" || !selected) {
+      return;
+    }
+
+    const pagination = getLibraryPaginationState(page, props.filtered.length);
+    const selectedPage = getLibraryPageForItemId(
+      props.filtered,
+      selected.id,
+      pagination.pageSize,
+    );
+
+    if (selectedPage === null) {
+      setSelected(null);
+      props.onNewSnippet();
+      return;
+    }
+
+    if (selectedPage !== page) {
+      setPage(selectedPage);
+    }
+  }, [detailView, page, props.filtered, props.onNewSnippet, selected]);
+
+  useEffect(() => {
+    if (!showSettings) {
+      return;
+    }
+
+    previousFocusRef.current = document.activeElement as HTMLElement | null;
+
+    const frame = requestAnimationFrame(() => {
+      closeSettingsRef.current?.focus();
+    });
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setShowSettings(false);
+        return;
+      }
+
+      if (event.key !== "Tab" || !settingsDialogRef.current) {
+        return;
+      }
+
+      const focusable = Array.from(
+        settingsDialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      );
+
+      if (focusable.length === 0) {
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+
+      if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener("keydown", handleKeyDown);
+      previousFocusRef.current?.focus();
+    };
+  }, [showSettings]);
+
   function handleInsert(id: string) {
-    const snippet = props.filtered.find((s) => s.id === id);
+    const snippet = props.filtered.find((item) => item.id === id);
     if (snippet && hasParams(snippet.value)) {
       setParamSnippet(snippet);
-    } else {
-      void props.onInsert(id);
+      return;
     }
+
+    void props.onInsert(id);
   }
 
   function handleParamSubmit(values: Record<string, string>) {
-    if (!paramSnippet) return;
+    if (!paramSnippet) {
+      return;
+    }
+
     const finalText = substituteParams(paramSnippet.value, values);
     setParamSnippet(null);
     void props.onInsertText(paramSnippet.id, finalText);
@@ -88,22 +186,22 @@ export function LibraryScreen(props: ScreenProps) {
     props.onNewSnippet();
   }
 
+  function handleQueryChange(query: string) {
+    setPage(0);
+    props.onQueryChange(query);
+  }
+
   function handleShowAbout() {
     setSelected(null);
     setDetailView("about");
   }
 
-  async function handleDeleteSnippet() {
+  function closeSettings() {
+    setShowSettings(false);
+  }
+
+  const confirmDelete = useCallback(async () => {
     if (!props.editingId) {
-      return;
-    }
-
-    const title = props.draft.title.trim() || "this snippet";
-    const confirmed = window.confirm(
-      `Delete "${title}"? This action cannot be undone.`,
-    );
-
-    if (!confirmed) {
       return;
     }
 
@@ -113,53 +211,29 @@ export function LibraryScreen(props: ScreenProps) {
     }
 
     setSelected(null);
+    setConfirmingDelete(false);
     setDetailView("snippet");
     props.onNewSnippet();
-  }
+  }, [props]);
 
-  const pagination = getLibraryPaginationState(page, props.filtered.length);
-  const visibleSnippets = getLibraryPageItems(
-    props.filtered,
-    pagination.page,
-    pagination.pageSize,
-  );
-
-  useEffect(() => {
-    if (detailView !== "snippet" || !selected) {
-      return;
-    }
-
-    const selectedPage = getLibraryPageForItemId(
-      props.filtered,
-      selected.id,
-      pagination.pageSize,
+  const focusListItem = useCallback((index: number) => {
+    const list = document.querySelector<HTMLUListElement>(
+      "[data-library-list]",
     );
-
-    if (selectedPage === null) {
-      setSelected(null);
-      props.onNewSnippet();
-      return;
-    }
-
-    if (selectedPage !== page) {
-      setPage(selectedPage);
-    }
-  }, [
-    detailView,
-    page,
-    pagination.pageSize,
-    props.filtered,
-    props.onNewSnippet,
-    selected,
-  ]);
+    const buttons = list?.querySelectorAll<HTMLButtonElement>(
+      "button[data-library-row]",
+    );
+    if (!buttons || buttons.length === 0) return;
+    const safe = Math.max(0, Math.min(buttons.length - 1, index));
+    buttons[safe].focus();
+  }, []);
 
   function handlePageChange(nextPage: number) {
+    const pagination = getLibraryPaginationState(page, props.filtered.length);
     const nextPagination = getLibraryPaginationState(
       nextPage,
       props.filtered.length,
-      {
-        pageSize: pagination.pageSize,
-      },
+      { pageSize: pagination.pageSize },
     );
     const nextVisibleSnippets = getLibraryPageItems(
       props.filtered,
@@ -191,72 +265,139 @@ export function LibraryScreen(props: ScreenProps) {
     props.onNewSnippet();
   }
 
+  const pagination = getLibraryPaginationState(page, props.filtered.length);
+  const visibleSnippets = getLibraryPageItems(
+    props.filtered,
+    pagination.page,
+    pagination.pageSize,
+  );
+
+  function handleListKeyDown(
+    event: ReactKeyboardEvent<HTMLButtonElement>,
+    snippet: SnippetRecord,
+    index: number,
+  ) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleSelectSnippet(snippet);
+      return;
+    }
+    if (event.key === "ArrowDown" || event.key === "j") {
+      event.preventDefault();
+      focusListItem(index + 1);
+      return;
+    }
+    if (event.key === "ArrowUp" || event.key === "k") {
+      event.preventDefault();
+      focusListItem(index - 1);
+    }
+  }
+
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (showSettings) return;
+      const target = event.target as HTMLElement | null;
+      const isEditable =
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable);
+
+      if ((event.metaKey || event.ctrlKey) && event.key === ",") {
+        event.preventDefault();
+        setShowSettings(true);
+        return;
+      }
+
+      if (isEditable) return;
+
+      if (event.key === "/") {
+        const search = document.querySelector<HTMLInputElement>(
+          'input[type="search"]',
+        );
+        if (search) {
+          event.preventDefault();
+          search.focus();
+        }
+      }
+    }
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showSettings]);
+
   return (
     <motion.section
       variants={fadeIn}
       initial="hidden"
       animate="visible"
-      className="glass flex h-full overflow-hidden"
+      className="surface flex h-full flex-col overflow-hidden lg:flex-row"
     >
-      {/* ── Sidebar ── */}
-      <aside className="flex w-64 shrink-0 flex-col h-full bg-accent/20 border-r border-border/30 overflow-hidden">
-        {/* Search */}
-        <div className="p-3 pb-2">
+      <aside className="flex w-full shrink-0 flex-col border-b border-border lg:w-[19.5rem] lg:border-b-0 lg:border-r">
+        <div className="flex items-center gap-2 border-b border-border px-4 py-4">
           <SearchBar
-            onQueryChange={props.onQueryChange}
-            placeholder="Search snippets…"
+            autoFocus
+            label="Search snippets"
+            onQueryChange={handleQueryChange}
+            placeholder="Search snippets"
           />
-        </div>
-
-        {/* Snippet count + New button */}
-        <div className="flex items-center justify-between px-4 pb-2">
-          <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-            Snippets
-            <span className="ml-1.5 font-mono text-muted-foreground/60 tabular-nums">
-              {props.filtered.length}
-            </span>
+          <span
+            aria-label={`${props.filtered.length} snippets`}
+            className="font-mono text-[11px] tabular-nums text-muted-foreground"
+          >
+            {props.filtered.length}
           </span>
           <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 pressable"
+            aria-label="Create a new snippet"
+            variant="default"
+            size="icon-sm"
             onClick={handleNewSnippet}
-            title="New snippet"
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="h-4 w-4" />
           </Button>
         </div>
 
-        <Separator className="bg-border/30" />
-
-        {/* Scrollable snippet list */}
         <ScrollArea className="flex-1 min-h-0">
           {props.filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
-              <p className="text-sm font-medium text-muted-foreground">
+            <div className="flex flex-col gap-1 px-5 py-10">
+              <p className="text-[14px] font-semibold text-foreground">
                 No snippets yet
               </p>
-              <p className="text-xs text-muted-foreground/60 mt-1">
-                Create your first command to get started.
+              <p className="max-w-[28ch] text-[12.5px] leading-relaxed text-muted-foreground">
+                Save a command, reply, or template once. Paste it anywhere with
+                your shortcut.
               </p>
             </div>
           ) : (
-            <ul className="flex flex-col gap-0.5 p-2 list-none">
-              {visibleSnippets.map((snippet) => (
+            <ul className="flex flex-col gap-0.5 p-2" data-library-list>
+              {visibleSnippets.map((snippet, index) => (
                 <li key={snippet.id}>
                   <button
                     type="button"
-                    className={`pressable w-full text-left rounded-lg px-3 py-2 transition-colors cursor-pointer border border-transparent hover:bg-accent/40 hover:border-border/40 ${
-                      selected?.id === snippet.id ? "item-active" : ""
-                    }`}
+                    data-library-row
+                    className={cn(
+                      "list-item w-full cursor-pointer px-3 py-2.5 text-left",
+                      selected?.id === snippet.id && "list-item-active",
+                    )}
                     onClick={() => handleSelectSnippet(snippet)}
+                    onKeyDown={(event) =>
+                      handleListKeyDown(event, snippet, index)
+                    }
                   >
-                    <h3 className="snippet-preview-title text-[13px] font-medium text-foreground leading-tight">
-                      {getSnippetPreviewText(snippet.title)}
-                    </h3>
-                    <p className="snippet-preview-value font-mono text-[11px] text-foreground/50 mt-0.5">
-                      {getSnippetPreviewText(snippet.value)}
-                    </p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="snippet-preview-title min-w-0 flex-1 text-[13.5px] font-medium text-foreground">
+                        {getSnippetPreviewText(snippet.title)}
+                      </p>
+                      {snippet.useCount > 0 ? (
+                        <span className="shrink-0 font-mono text-[10.5px] tabular-nums text-muted-foreground">
+                          {snippet.useCount}×
+                        </span>
+                      ) : null}
+                    </div>
+                    <SnippetPreviewLine
+                      parts={getSnippetPreviewParts(snippet.value)}
+                      className="snippet-preview-value mt-0.5 block font-mono text-[11.5px] text-muted-foreground"
+                    />
                   </button>
                 </li>
               ))}
@@ -264,192 +405,245 @@ export function LibraryScreen(props: ScreenProps) {
           )}
         </ScrollArea>
 
-        {pagination.totalPages > 1 && (
-          <div className="px-3 py-2 border-t border-border/20 bg-background/10">
-            <div className="flex items-center justify-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-3 text-[11px]"
-                disabled={pagination.page === 0}
-                onClick={() => handlePageChange(page - 1)}
-              >
-                Prev
-              </Button>
-              <span className="text-[10.5px] font-mono text-muted-foreground tabular-nums">
-                {pagination.page + 1} / {pagination.totalPages}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-3 text-[11px]"
-                disabled={pagination.page >= pagination.totalPages - 1}
-                onClick={() => handlePageChange(page + 1)}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        )}
-
-        <Separator className="bg-border/30" />
-
-        {/* Sidebar footer */}
-        <div className="flex flex-col gap-1 p-3">
-          <div className="flex items-center gap-1.5">
+        {pagination.totalPages > 1 ? (
+          <div className="flex items-center justify-center gap-3 border-t border-border px-3 py-2">
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 flex-1 px-2 text-xs gap-1 pressable"
+              disabled={pagination.page === 0}
+              onClick={() => handlePageChange(page - 1)}
+            >
+              Prev
+            </Button>
+            <span className="font-mono text-[12px] tabular-nums text-muted-foreground">
+              {pagination.page + 1} / {pagination.totalPages}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={pagination.page >= pagination.totalPages - 1}
+              onClick={() => handlePageChange(page + 1)}
+            >
+              Next
+            </Button>
+          </div>
+        ) : null}
+
+        <div className="flex items-center gap-1 border-t border-border p-2">
+          {props.permissionGranted ? (
+            <span className="status-pill status-pill--success flex-1 justify-center">
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+              Accessibility ready
+            </span>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-1 gap-2 px-3 status-pill status-pill--warning"
               onClick={() => void props.onAccessibilityOpen()}
             >
-              <Shield className="h-3 w-3" />
-              Accessibility
+              <Shield className="h-4 w-4" aria-hidden="true" />
+              Accessibility required
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0 pressable"
-              onClick={() => setShowSettings((v) => !v)}
-              title="Settings"
-            >
-              <Settings className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0 pressable"
-              onClick={handleShowAbout}
-              title="About"
-            >
-              <Info className="h-3.5 w-3.5" />
-            </Button>
-          </div>
+          )}
+          <Button
+            ref={settingsTriggerRef}
+            aria-label="Open settings"
+            title="Settings (⌘,)"
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => setShowSettings(true)}
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
+          <Button
+            aria-label="About QuickCommand"
+            variant="ghost"
+            size="icon-sm"
+            onClick={handleShowAbout}
+          >
+            <Info className="h-4 w-4" />
+          </Button>
         </div>
       </aside>
 
-      {/* ── Detail panel ── */}
       <main className="flex flex-1 flex-col min-w-0 overflow-hidden">
         <ScrollArea className="flex-1 min-h-0">
-          <div className="p-5 flex flex-col gap-5">
-            {/* Param input form overlay */}
+          <div className="flex flex-col gap-8 px-6 py-6 md:px-8">
             {paramSnippet ? (
-              <div className="rounded-xl border border-border/50 bg-card/60 p-5">
-                <ParamInputForm
-                  params={extractParams(paramSnippet.value)}
-                  snippetTitle={paramSnippet.title}
-                  onSubmit={handleParamSubmit}
-                  onCancel={() => setParamSnippet(null)}
-                />
-              </div>
+              <ParamInputForm
+                params={extractParams(paramSnippet.value)}
+                snippetTitle={paramSnippet.title}
+                onSubmit={handleParamSubmit}
+                onCancel={() => setParamSnippet(null)}
+              />
             ) : detailView === "about" ? (
-              /* About panel */
-              <div className="rounded-xl border border-border/50 bg-card/60 p-5 flex flex-col gap-3">
-                <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider pb-2 border-b border-border/30">
-                  About
-                </h2>
-                <AboutPanel
-                  onCheckForUpdates={props.onCheckForUpdates}
-                  onClose={() => setDetailView("snippet")}
-                  onOpenUpdateDownload={props.onOpenUpdateDownload}
-                  updateChecking={props.updateChecking}
-                  updateError={props.updateError}
-                  updateInfo={props.updateInfo}
-                />
-              </div>
+              <AboutPanel
+                onCheckForUpdates={props.onCheckForUpdates}
+                onClose={() => setDetailView("snippet")}
+                onOpenUpdateDownload={props.onOpenUpdateDownload}
+                updateChecking={props.updateChecking}
+                updateError={props.updateError}
+                updateInfo={props.updateInfo}
+              />
             ) : (
               <>
-                {/* Selected snippet detail card */}
-                {selected && (
-                  <div className="rounded-xl border border-border/50 bg-card/60 p-5 flex flex-col gap-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <h2 className="snippet-text-wrap text-lg font-semibold text-foreground leading-tight">
-                          {selected.title}
-                        </h2>
-                        <div className="flex items-center gap-3 mt-2">
-                          {selected.useCount > 0 && (
-                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Hash className="h-3 w-3" />
-                              Used {selected.useCount}×
+                <section className="flex flex-col gap-4">
+                  {selected ? (
+                    <>
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="min-w-0 space-y-2">
+                          <p className="section-label">Snippet</p>
+                          <h2 className="snippet-text-wrap text-[22px] font-semibold leading-tight tracking-[-0.015em] text-foreground">
+                            {selected.title}
+                          </h2>
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-muted-foreground">
+                            <span className="inline-flex items-center gap-1.5">
+                              <Calendar
+                                className="h-3.5 w-3.5"
+                                aria-hidden="true"
+                              />
+                              Created{" "}
+                              {new Date(
+                                selected.createdAt,
+                              ).toLocaleDateString()}
                             </span>
-                          )}
-                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Calendar className="h-3 w-3" />
-                            {new Date(selected.createdAt).toLocaleDateString()}
-                          </span>
+                            {selected.lastUsedAt ? (
+                              <span className="inline-flex items-center gap-1.5">
+                                <Hash
+                                  className="h-3.5 w-3.5"
+                                  aria-hidden="true"
+                                />
+                                Last used{" "}
+                                {new Date(
+                                  selected.lastUsedAt,
+                                ).toLocaleDateString()}
+                              </span>
+                            ) : null}
+                            {hasParams(selected.value) ? (
+                              <span className="inline-flex items-center gap-2">
+                                {extractParams(selected.value).map((param) => (
+                                  <Badge
+                                    key={param}
+                                    variant="outline"
+                                    className="font-mono text-[10.5px]"
+                                  >
+                                    {`{${param}}`}
+                                  </Badge>
+                                ))}
+                              </span>
+                            ) : null}
+                          </div>
                         </div>
+                        <Button
+                          className="shrink-0 gap-2"
+                          onClick={() => handleInsert(selected.id)}
+                        >
+                          <ClipboardPaste className="h-4 w-4" />
+                          Paste snippet
+                        </Button>
                       </div>
-                      <Button
-                        size="sm"
-                        className="h-8 px-3 text-xs gap-1.5 pressable shrink-0"
-                        onClick={() => handleInsert(selected.id)}
-                      >
-                        <ClipboardPaste className="h-3.5 w-3.5" />
-                        Paste
-                      </Button>
+                      <pre className="surface-inset snippet-text-wrap whitespace-pre-wrap p-4 font-mono text-[13px] leading-relaxed text-foreground">
+                        {selected.value}
+                      </pre>
+                    </>
+                  ) : (
+                    <div className="space-y-1.5">
+                      <p className="section-label">Detail</p>
+                      <h2 className="text-[18px] font-semibold tracking-[-0.005em] text-foreground">
+                        Pick a snippet, or write a new one
+                      </h2>
+                      <p className="max-w-[58ch] text-[13.5px] leading-relaxed text-muted-foreground">
+                        Selecting a snippet on the left shows it here for
+                        review. The form below is always live for the current
+                        draft.
+                      </p>
                     </div>
+                  )}
+                </section>
 
-                    <pre className="snippet-text-wrap rounded-lg bg-background/60 border border-border/40 p-3 font-mono text-[13px] text-foreground/90 whitespace-pre-wrap overflow-x-auto leading-relaxed">
-                      {selected.value}
-                    </pre>
-
-                    {hasParams(selected.value) && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {extractParams(selected.value).map((p) => (
-                          <Badge
-                            key={p}
-                            variant="outline"
-                            className="font-mono text-[10.5px] px-1.5 py-0 text-primary border-primary/30 bg-primary/5"
-                          >
-                            {`{${p}}`}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
+                <section className="flex flex-col gap-4">
+                  <div className="space-y-1">
+                    <p className="section-label">
+                      {props.editingId ? "Editing" : "New snippet"}
+                    </p>
+                    <h2 className="text-[15px] font-semibold text-foreground">
+                      {props.editingId
+                        ? "Edit the selected snippet"
+                        : "Save it once, paste it forever"}
+                    </h2>
                   </div>
-                )}
-
-                {/* Edit / New form */}
-                <div className="rounded-xl border border-border/50 bg-card/60 p-5 flex flex-col gap-3">
-                  <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider pb-2 border-b border-border/30">
-                    {props.editingId ? "Edit snippet" : "New snippet"}
-                  </h2>
                   <SnippetForm
                     deleteDisabled={props.saving}
+                    deleteConfirming={confirmingDelete}
                     draft={props.draft}
                     onChange={props.onDraftChange}
                     onDelete={
-                      props.editingId ? handleDeleteSnippet : undefined
+                      props.editingId
+                        ? () => {
+                            setConfirmingDelete(true);
+                            return Promise.resolve();
+                          }
+                        : undefined
                     }
+                    onConfirmDelete={
+                      props.editingId ? confirmDelete : undefined
+                    }
+                    onCancelDelete={() => setConfirmingDelete(false)}
                     onSubmit={props.onSubmitSnippet}
                     saving={props.saving}
                   />
-                </div>
+                </section>
               </>
             )}
           </div>
         </ScrollArea>
       </main>
 
-      {/* ── Settings overlay ── */}
-      {showSettings && props.settings && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm">
-          <div className="glass w-[380px] max-h-[80vh] overflow-y-auto p-6 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-foreground">
-                Settings
-              </h2>
+      {showSettings && props.settings ? (
+        <div
+          className="absolute inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "var(--overlay)" }}
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              closeSettings();
+            }
+          }}
+        >
+          <div
+            ref={settingsDialogRef}
+            aria-describedby={settingsDescriptionId}
+            aria-labelledby={settingsTitleId}
+            aria-modal="true"
+            className="surface-strong flex max-h-[82vh] w-full max-w-[34rem] flex-col gap-5 overflow-y-auto p-6"
+            role="dialog"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <h2
+                  id={settingsTitleId}
+                  className="text-[17px] font-semibold text-foreground"
+                >
+                  Settings
+                </h2>
+                <p
+                  id={settingsDescriptionId}
+                  className="max-w-[44ch] text-[13px] leading-relaxed text-muted-foreground"
+                >
+                  Shortcut, launch behavior, and the local snippet file. No
+                  sync, no account.
+                </p>
+              </div>
               <Button
+                ref={closeSettingsRef}
+                aria-label="Close settings"
                 variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0 pressable"
-                onClick={() => setShowSettings(false)}
+                size="icon-sm"
+                onClick={closeSettings}
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <Separator className="bg-border/30" />
             <SettingsPanel
               onExport={props.onExport}
               onImport={props.onImport}
@@ -459,7 +653,7 @@ export function LibraryScreen(props: ScreenProps) {
             />
           </div>
         </div>
-      )}
+      ) : null}
     </motion.section>
   );
 }

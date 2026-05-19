@@ -1,9 +1,13 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Plus, Search } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowRight, CornerDownLeft, Plus } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { fadeIn } from "@/lib/motion";
-import { getSnippetPreviewText } from "@/lib/snippet-preview";
+import {
+  getSnippetPreviewParts,
+  getSnippetPreviewText,
+} from "@/lib/snippet-preview";
+import { cn } from "@/lib/utils";
 import {
   extractParams,
   hasParams,
@@ -12,6 +16,7 @@ import {
 import type { SnippetRecord } from "../../../shared/snippet-model";
 import { ParamInputForm } from "../components/ParamInputForm";
 import { SnippetForm } from "../components/SnippetForm";
+import { SnippetPreviewLine } from "../components/SnippetPreviewLine";
 import type { ScreenProps } from "./screen-props";
 
 export function PaletteScreen(props: ScreenProps) {
@@ -26,56 +31,66 @@ export function PaletteScreen(props: ScreenProps) {
   }, []);
 
   useEffect(() => {
-    setSelectedIndex(0);
-  }, [props.filtered.length]);
-
-  useEffect(() => {
     const timer = setTimeout(() => {
       props.onQueryChange(query);
     }, 120);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
+  }, [props.onQueryChange, query]);
+
+  const showEmpty = props.filtered.length === 0;
+  const emptyHeadline = useMemo(
+    () => (query ? "Nothing matches" : "Save your first snippet"),
+    [query],
+  );
+  const emptyHint = useMemo(
+    () =>
+      query
+        ? "Try a shorter or different word."
+        : "Press the + above to add the first one.",
+    [query],
+  );
 
   function handleInsert(id: string) {
-    const snippet = props.filtered.find((s) => s.id === id);
+    const snippet = props.filtered.find((item) => item.id === id);
     if (snippet && hasParams(snippet.value)) {
       setParamSnippet(snippet);
-    } else {
-      void props.onInsert(id);
+      return;
     }
+
+    void props.onInsert(id);
   }
 
   function handleParamSubmit(values: Record<string, string>) {
-    if (!paramSnippet) return;
+    if (!paramSnippet) {
+      return;
+    }
+
     const finalText = substituteParams(paramSnippet.value, values);
     setParamSnippet(null);
     void props.onInsertText(paramSnippet.id, finalText);
   }
 
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
-      const count = props.filtered.length;
-      if (count === 0) return;
+  function handleKeyDown(event: React.KeyboardEvent) {
+    const count = props.filtered.length;
+    if (count === 0) {
+      return;
+    }
 
-      switch (event.key) {
-        case "ArrowDown":
-          event.preventDefault();
-          setSelectedIndex((i) => (i + 1) % count);
-          break;
-        case "ArrowUp":
-          event.preventDefault();
-          setSelectedIndex((i) => (i - 1 + count) % count);
-          break;
-        case "Enter":
-          event.preventDefault();
-          handleInsert(props.filtered[selectedIndex].id);
-          break;
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [props.filtered, selectedIndex],
-  );
+    switch (event.key) {
+      case "ArrowDown":
+        event.preventDefault();
+        setSelectedIndex((index) => (index + 1) % count);
+        break;
+      case "ArrowUp":
+        event.preventDefault();
+        setSelectedIndex((index) => (index - 1 + count) % count);
+        break;
+      case "Enter":
+        event.preventDefault();
+        handleInsert(props.filtered[selectedIndex].id);
+        break;
+    }
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     await props.onSubmitSnippet(event);
@@ -89,14 +104,16 @@ export function PaletteScreen(props: ScreenProps) {
         variants={fadeIn}
         initial="hidden"
         animate="visible"
-        className="glass p-5 overflow-y-auto"
+        className="surface mx-auto w-full max-w-[44rem] overflow-hidden"
       >
-        <ParamInputForm
-          params={extractParams(paramSnippet.value)}
-          snippetTitle={paramSnippet.title}
-          onSubmit={handleParamSubmit}
-          onCancel={() => setParamSnippet(null)}
-        />
+        <div className="p-5">
+          <ParamInputForm
+            params={extractParams(paramSnippet.value)}
+            snippetTitle={paramSnippet.title}
+            onSubmit={handleParamSubmit}
+            onCancel={() => setParamSnippet(null)}
+          />
+        </div>
       </motion.div>
     );
   }
@@ -106,7 +123,7 @@ export function PaletteScreen(props: ScreenProps) {
       variants={fadeIn}
       initial="hidden"
       animate="visible"
-      className="glass overflow-y-auto"
+      className="surface mx-auto w-full max-w-[44rem] overflow-hidden"
       onKeyDown={handleKeyDown}
     >
       <AnimatePresence mode="wait">
@@ -117,22 +134,24 @@ export function PaletteScreen(props: ScreenProps) {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="p-5 flex flex-col gap-3"
+            className="flex flex-col gap-5 p-5"
           >
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-foreground">
-                New Command
-              </h3>
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <p className="section-label">New snippet</p>
+                <h2 className="text-[17px] font-semibold tracking-[-0.005em] text-foreground">
+                  Save it once, paste it forever
+                </h2>
+              </div>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 text-xs text-muted-foreground"
                 onClick={() => {
                   setShowForm(false);
                   props.onNewSnippet();
                 }}
               >
-                Cancel
+                Close
               </Button>
             </div>
             <SnippetForm
@@ -150,89 +169,116 @@ export function PaletteScreen(props: ScreenProps) {
             animate="visible"
             exit="exit"
           >
-            {/* Spotlight-style search bar */}
-            <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border/40">
-              <Search className="h-5 w-5 text-muted-foreground/60 shrink-0" />
+            <div className="flex items-center gap-3 border-b border-border px-5 py-4">
               <input
                 ref={inputRef}
-                autoFocus
-                className="flex-1 bg-transparent text-[16px] text-foreground placeholder:text-muted-foreground/60 outline-none"
-                placeholder="Search commands…"
+                aria-label="Search snippets"
+                className="flex-1 bg-transparent text-[16px] text-foreground placeholder:text-muted-foreground outline-none"
+                placeholder="Search snippets"
                 type="text"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(event) => {
+                  setSelectedIndex(0);
+                  setQuery(event.target.value);
+                }}
               />
-              <button
-                className="shrink-0 p-1.5 rounded-md hover:bg-accent/50 transition-colors text-muted-foreground"
-                type="button"
+              <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
+                {props.filtered.length}
+              </span>
+              <Button
+                aria-label="Create a new snippet"
+                variant="ghost"
+                size="icon-sm"
                 onClick={() => {
                   props.onNewSnippet();
                   setShowForm(true);
                 }}
-                title="New snippet"
               >
                 <Plus className="h-4 w-4" />
-              </button>
+              </Button>
             </div>
 
-            {/* Results */}
-            {props.filtered.length > 0 ? (
-              <div className="py-1.5 max-h-[320px] overflow-y-auto">
-                {props.filtered.map((snippet, index) => (
-                  <button
-                    key={snippet.id}
-                    type="button"
-                    className={`pressable w-full text-left px-5 py-2.5 flex items-center gap-3 transition-colors ${
-                      index === selectedIndex
-                        ? "item-active"
-                        : "hover:bg-accent/30"
-                    }`}
-                    onClick={() => handleInsert(snippet.id)}
-                    onMouseEnter={() => setSelectedIndex(index)}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="snippet-preview-title text-[13.5px] font-medium text-foreground leading-tight">
-                        {getSnippetPreviewText(snippet.title)}
-                      </p>
-                      <p className="snippet-preview-value text-[11px] font-mono text-foreground/50 mt-0.5">
-                        {getSnippetPreviewText(snippet.value)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {snippet.useCount > 0 && (
-                        <span className="text-[10px] font-mono text-muted-foreground/60 tabular-nums">
-                          {snippet.useCount}×
-                        </span>
-                      )}
-                      {index === selectedIndex && (
-                        <span className="kbd">↵</span>
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="py-10 text-center">
-                <p className="text-sm text-muted-foreground/60">
-                  {query ? "No matching commands" : "No commands yet"}
+            {showEmpty ? (
+              <div className="flex flex-col items-center gap-1 px-5 py-12 text-center">
+                <p className="text-[14px] font-semibold text-foreground">
+                  {emptyHeadline}
+                </p>
+                <p className="text-[13px] text-muted-foreground">
+                  {emptyHint}
                 </p>
               </div>
+            ) : (
+              <ul className="max-h-[24rem] overflow-y-auto p-2">
+                {props.filtered.map((snippet, index) => {
+                  const active = index === selectedIndex;
+                  return (
+                    <li key={snippet.id}>
+                      <button
+                        type="button"
+                        className={cn(
+                          "list-item flex w-full items-center gap-3 px-3 py-2.5 text-left",
+                          active && "list-item-active",
+                        )}
+                        onClick={() => handleInsert(snippet.id)}
+                        onMouseEnter={() => setSelectedIndex(index)}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="snippet-preview-title text-[14px] font-medium text-foreground">
+                            {getSnippetPreviewText(snippet.title)}
+                          </p>
+                          <SnippetPreviewLine
+                            parts={getSnippetPreviewParts(snippet.value)}
+                            className="snippet-preview-value mt-0.5 block font-mono text-[12px] text-muted-foreground"
+                          />
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2 text-[11px] text-muted-foreground">
+                          {snippet.useCount > 0 ? (
+                            <span className="font-mono tabular-nums">
+                              {snippet.useCount}×
+                            </span>
+                          ) : null}
+                          {active ? (
+                            <ArrowRight
+                              className="h-3.5 w-3.5 text-foreground"
+                              aria-hidden="true"
+                            />
+                          ) : null}
+                        </div>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
 
-            {/* Footer hints */}
-            {props.filtered.length > 0 && (
-              <div className="flex items-center justify-center gap-4 px-5 py-2 border-t border-border/30 bg-muted/10">
-                <span className="flex items-center gap-1.5 text-[10.5px] text-muted-foreground/60">
-                  <span className="kbd">↑↓</span> navigate
+            <div className="flex items-center justify-between gap-4 border-t border-border px-5 py-3 text-[11px] text-muted-foreground">
+              {showEmpty ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="kbd">esc</span>
+                  Close
                 </span>
-                <span className="flex items-center gap-1.5 text-[10.5px] text-muted-foreground/60">
-                  <span className="kbd">↵</span> paste
-                </span>
-                <span className="flex items-center gap-1.5 text-[10.5px] text-muted-foreground/60">
-                  <span className="kbd">esc</span> close
-                </span>
-              </div>
-            )}
+              ) : (
+                <>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="kbd">↑↓</span>
+                    Move
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="kbd">
+                      <CornerDownLeft
+                        className="h-3 w-3"
+                        aria-hidden="true"
+                      />
+                    </span>
+                    Paste
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="kbd">esc</span>
+                    Close
+                  </span>
+                </>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

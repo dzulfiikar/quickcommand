@@ -1,3 +1,5 @@
+<!-- Parent: ../AGENTS.md -->
+
 # Main Process
 
 ## Package Identity

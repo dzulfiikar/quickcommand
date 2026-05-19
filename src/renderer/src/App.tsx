@@ -1,17 +1,11 @@
 import {
   AlertTriangle,
-  Command,
   Loader2,
   ShieldAlert,
-  ShieldCheck,
+  X,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  getLibraryAccessibilityBadge,
-  getLibraryShortcutBadge,
-} from "@/lib/library-header-badges";
 import { cn } from "@/lib/utils";
 import type { InsertResult } from "../../shared/app-api";
 import type { Settings } from "../../shared/settings-model";
@@ -25,21 +19,24 @@ import { TrayScreen } from "./features/TrayScreen";
 
 const insertErrorMessages = {
   clipboard_restore_failed:
-    "QuickCommand pasted the snippet, but restoring the previous clipboard content failed.",
+    "Pasted the snippet, but couldn't restore your previous clipboard.",
   helper_failed:
-    "The macOS helper failed to trigger paste. Rebuild the helper or recheck Accessibility access.",
+    "The macOS helper couldn't paste. Rebuild the helper or re-check Accessibility access.",
   not_trusted:
     "Accessibility permission is required before snippets can be pasted into other apps.",
 } satisfies Record<Exclude<InsertResult, { ok: true }>["reason"], string>;
 
-/** Extract a readable message from Zod or generic errors */
+const insertErrorActionable = new Set<
+  Exclude<InsertResult, { ok: true }>["reason"]
+>(["not_trusted"]);
+
+/** Extract a readable message from Zod or generic errors. */
 function friendlyError(error: unknown, fallback: string): string {
   if (error instanceof Error) {
-    // Zod errors come through IPC as serialized JSON strings
+    // Zod errors come through IPC as serialized JSON strings.
     try {
       const parsed = JSON.parse(error.message);
       if (Array.isArray(parsed)) {
-        // Zod v4 error format: array of issues
         return parsed
           .map(
             (issue: { path?: string[]; message?: string }) =>
@@ -48,7 +45,7 @@ function friendlyError(error: unknown, fallback: string): string {
           .join(". ");
       }
     } catch {
-      // Not JSON — use the message directly
+      // Not JSON, use the message directly.
     }
     return error.message;
   }
@@ -158,7 +155,7 @@ export function App() {
     const cleanupHotkey = window.quickCommand.app.onHotkeyRegistrationFailed(
       () => {
         setHotkeyWarning(
-          "The selected global shortcut is unavailable. Pick another shortcut in settings.",
+          "The selected global shortcut is unavailable. Pick another in Settings.",
         );
       },
     );
@@ -407,154 +404,124 @@ export function App() {
   };
 
   const content = renderScreen(kind, screenProps);
-  const showHeader = kind === "library" || kind === "onboarding";
-  const shortcutBadge = state.settings
-    ? getLibraryShortcutBadge(state.settings.globalShortcut)
-    : null;
-  const accessibilityBadge = getLibraryAccessibilityBadge(
-    state.permissionGranted,
-  );
+
+  const showAccessibilityRecovery =
+    state.error?.toLowerCase().includes("accessibility") ?? false;
 
   return (
-    <div className="h-screen mesh-bg flex flex-col overflow-hidden">
+    <div className="app-shell h-screen flex flex-col overflow-hidden">
       <main
         className={cn(
-          "flex-1 flex flex-col min-h-0 p-4",
+          "flex-1 flex min-h-0 flex-col p-4",
           kind === "library" && "pt-10",
           kind === "onboarding" && "pt-10",
           kind === "palette" && "pt-9",
         )}
       >
-        {/* Header — only for library and onboarding */}
-        {showHeader && (
-          <header className="drag-region flex items-center justify-between gap-3 mb-4 pb-3.5 border-b border-border/40">
-            <div className="no-drag">
-              <p className="text-[10px] font-bold tracking-widest uppercase text-primary">
-                QuickCommand
-              </p>
-              <h1 className="text-[15px] font-semibold text-foreground mt-0.5">
-                {kind === "onboarding" && "Welcome"}
-                {kind === "library" && "Snippet Library"}
-              </h1>
-            </div>
-            {state.settings ? (
-              kind === "library" && shortcutBadge ? (
-                <div className="no-drag flex gap-1.5">
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "max-w-[240px] justify-start",
-                      shortcutBadge.className,
-                    )}
-                    title={shortcutBadge.label}
-                  >
-                    <Command className="h-3 w-3 shrink-0" />
-                    <span className="truncate">{shortcutBadge.label}</span>
-                  </Badge>
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "justify-start",
-                      accessibilityBadge.className,
-                    )}
-                  >
-                    {state.permissionGranted ? (
-                      <ShieldCheck className="h-3 w-3 shrink-0" />
-                    ) : (
-                      <ShieldAlert className="h-3 w-3 shrink-0" />
-                    )}
-                    <span>{accessibilityBadge.label}</span>
-                  </Badge>
-                </div>
-              ) : (
-                <div className="no-drag flex gap-1.5">
-                  <Badge
-                    variant="secondary"
-                    className="text-[11px] font-normal px-2 py-0.5 bg-secondary/50"
-                  >
-                    {state.settings.globalShortcut ?? "No hotkey configured"}
-                  </Badge>
-                  <Badge
-                    variant={
-                      state.permissionGranted ? "secondary" : "destructive"
-                    }
-                    className={cn(
-                      "text-[11px] font-normal px-2 py-0.5",
-                      state.permissionGranted && "bg-secondary/50",
-                    )}
-                  >
-                    {state.permissionGranted
-                      ? "Accessibility ready"
-                      : "Accessibility required"}
-                  </Badge>
-                </div>
-              )
-            ) : null}
-          </header>
-        )}
-
-        {/* Error banner */}
-        {state.error ? (
-          <div className="mb-3 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3.5 text-[13px] text-red-300 animate-in fade-in duration-200">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
-              <span className="flex-1">{state.error}</span>
-              {state.error.includes("Accessibility") ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-[11px] border-destructive/30 text-red-300 hover:bg-destructive/10 shrink-0"
-                  onClick={() => void promptAccessibility()}
-                >
-                  <ShieldAlert className="h-3 w-3 mr-1" />
-                  Grant Access
-                </Button>
-              ) : null}
-            </div>
-          </div>
+        {kind === "library" ? (
+          <div className="drag-region absolute inset-x-0 top-0 h-9" />
         ) : null}
 
-        {/* Permission warning */}
-        {!state.permissionGranted && !state.loading && kind !== "onboarding" ? (
-          <div className="mb-3 rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-3.5 text-[13px] text-yellow-300">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="h-4 w-4 text-yellow-400 shrink-0" />
-              <span className="flex-1">
-                Accessibility access is required to paste snippets.
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 text-[11px] border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/10 shrink-0"
-                onClick={() => void promptAccessibility()}
-              >
-                <ShieldAlert className="h-3 w-3 mr-1" />
-                Grant Access
-              </Button>
-            </div>
-          </div>
-        ) : null}
-
-        {/* Hotkey warning */}
-        {hotkeyWarning ? (
-          <div className="mb-3 rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-3.5 text-[13px] text-yellow-300">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="h-4 w-4 text-yellow-400 shrink-0" />
-              <span className="flex-1">{hotkeyWarning}</span>
-            </div>
-          </div>
-        ) : null}
-
-        {/* Loading */}
         {state.loading ? (
-          <div className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span className="text-sm">Loading QuickCommand…</span>
+          <div
+            className="flex items-center justify-center gap-2 py-12 text-muted-foreground"
+            role="status"
+            aria-live="polite"
+          >
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            <span className="text-sm">Loading…</span>
           </div>
         ) : (
           <div className="flex-1 min-h-0">{content}</div>
         )}
+
+        <div
+          aria-live="polite"
+          aria-atomic="true"
+          className="pointer-events-none absolute inset-x-0 bottom-3 z-40 flex flex-col items-center gap-2 px-4"
+        >
+          {hotkeyWarning ? (
+            <Toast
+              variant="warning"
+              icon={
+                <AlertTriangle
+                  className="h-4 w-4 shrink-0"
+                  aria-hidden="true"
+                />
+              }
+              onDismiss={() => setHotkeyWarning(null)}
+              action={null}
+            >
+              {hotkeyWarning}
+            </Toast>
+          ) : null}
+
+          {state.error ? (
+            <Toast
+              variant="error"
+              icon={
+                <AlertTriangle
+                  className="h-4 w-4 shrink-0"
+                  aria-hidden="true"
+                />
+              }
+              onDismiss={() =>
+                setState((current) => ({ ...current, error: null }))
+              }
+              action={
+                showAccessibilityRecovery ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void promptAccessibility()}
+                  >
+                    <ShieldAlert
+                      className="h-3.5 w-3.5"
+                      aria-hidden="true"
+                    />
+                    Grant access
+                  </Button>
+                ) : null
+              }
+            >
+              {state.error}
+            </Toast>
+          ) : null}
+        </div>
       </main>
+    </div>
+  );
+}
+
+function Toast(props: {
+  children: React.ReactNode;
+  variant: "warning" | "error";
+  icon: React.ReactNode;
+  action: React.ReactNode | null;
+  onDismiss(): void;
+}) {
+  const variantClass =
+    props.variant === "warning" ? "notice notice--warning" : "notice notice--error";
+
+  return (
+    <div
+      role="alert"
+      className={cn(
+        "pointer-events-auto flex w-full max-w-[36rem] items-center gap-3 px-4 py-3 text-[13px]",
+        variantClass,
+      )}
+    >
+      {props.icon}
+      <span className="flex-1 leading-snug">{props.children}</span>
+      {props.action}
+      <button
+        type="button"
+        aria-label="Dismiss"
+        className="-m-1 inline-flex size-8 items-center justify-center rounded-md text-current/80 hover:text-current"
+        onClick={props.onDismiss}
+      >
+        <X className="h-4 w-4" />
+      </button>
     </div>
   );
 }

@@ -7,3 +7,4 @@ dist-native
 worktrees
 docs
 .github/copilot-instructions.md
+.omc/

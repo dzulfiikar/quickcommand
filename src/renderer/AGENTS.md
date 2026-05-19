@@ -1,3 +1,5 @@
+<!-- Parent: ../AGENTS.md -->
+
 # Renderer
 
 ## Package Identity

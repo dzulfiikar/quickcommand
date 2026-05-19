@@ -17,7 +17,8 @@ describe("SettingsPanel", () => {
       />,
     );
 
-    expect(html).toContain("Import snippets");
-    expect(html).toContain("Export snippets");
+    expect(html).toContain("Snippet data");
+    expect(html).toContain(">Import<");
+    expect(html).toContain(">Export<");
   });
 });

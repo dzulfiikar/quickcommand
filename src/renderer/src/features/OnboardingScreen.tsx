@@ -1,31 +1,48 @@
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  Command,
-  Keyboard,
-  ShieldAlert,
-  Sparkles,
-} from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, ArrowRight, Check, ShieldAlert } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { fadeIn, slideUp } from "@/lib/motion";
+import { formatShortcut } from "@/lib/shortcut";
 import { SettingsPanel } from "../components/SettingsPanel";
 import type { ScreenProps } from "./screen-props";
 
-const STEPS = ["welcome", "accessibility", "hotkey"] as const;
-type Step = (typeof STEPS)[number];
+const STEPS = [
+  {
+    id: "review",
+    label: "Overview",
+    note: "What QuickCommand needs before it can paste for you.",
+  },
+  {
+    id: "accessibility",
+    label: "Accessibility",
+    note: "Allow paste automation in the apps you actually use.",
+  },
+  {
+    id: "shortcut",
+    label: "Shortcut",
+    note: "Pick the one keystroke that opens the palette.",
+  },
+] as const;
+
+type Step = (typeof STEPS)[number]["id"];
 
 export function OnboardingScreen(props: ScreenProps) {
-  const [step, setStep] = useState<Step>("welcome");
-  const stepIndex = STEPS.indexOf(step);
+  const [step, setStep] = useState<Step>("review");
+  const stepIndex = STEPS.findIndex((item) => item.id === step);
+
+  const currentStep = useMemo(() => STEPS[stepIndex], [stepIndex]);
 
   function next() {
-    if (stepIndex < STEPS.length - 1) setStep(STEPS[stepIndex + 1]);
+    if (stepIndex < STEPS.length - 1) {
+      setStep(STEPS[stepIndex + 1].id);
+    }
   }
+
   function prev() {
-    if (stepIndex > 0) setStep(STEPS[stepIndex - 1]);
+    if (stepIndex > 0) {
+      setStep(STEPS[stepIndex - 1].id);
+    }
   }
 
   return (
@@ -33,196 +50,262 @@ export function OnboardingScreen(props: ScreenProps) {
       variants={fadeIn}
       initial="hidden"
       animate="visible"
-      className="glass overflow-hidden flex flex-col"
+      className="surface flex h-full min-h-0 flex-col overflow-hidden xl:grid xl:grid-cols-[20rem_minmax(0,1fr)]"
     >
-      {/* Progress dots */}
-      <div className="flex items-center justify-center gap-2 pt-6 pb-2">
-        {STEPS.map((s, i) => (
-          <button
-            key={s}
-            type="button"
-            className={`h-1.5 rounded-full transition-all duration-200 ${
-              i === stepIndex
-                ? "w-6 bg-primary"
-                : i < stepIndex
-                  ? "w-1.5 bg-primary/40"
-                  : "w-1.5 bg-muted-foreground/20"
-            }`}
-            onClick={() => i <= stepIndex && setStep(STEPS[i])}
-          />
-        ))}
-      </div>
+      <aside className="flex flex-col gap-6 border-b border-border p-5 xl:border-b-0 xl:border-r">
+        <div className="space-y-2">
+          <p className="section-label">Setup</p>
+          <h2 className="text-[20px] font-semibold tracking-[-0.01em] text-foreground">
+            Three small things, then you are done
+          </h2>
+          <p className="max-w-[34ch] text-[13px] leading-relaxed text-muted-foreground">
+            QuickCommand only asks for what it needs to paste reliably. No
+            account, no sync, no cloud.
+          </p>
+        </div>
 
-      {/* Step content */}
-      <div className="flex-1 px-8 py-6">
-        <AnimatePresence mode="wait">
-          {step === "welcome" && (
-            <motion.div
-              key="welcome"
-              variants={slideUp}
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-              className="flex flex-col items-center text-center gap-5"
-            >
-              <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
-                <Sparkles className="h-7 w-7 text-primary" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <h1 className="text-xl font-bold text-foreground tracking-tight">
-                  Welcome to QuickCommand
-                </h1>
-                <p className="text-[13px] text-muted-foreground/60 leading-relaxed max-w-xs mx-auto">
-                  Your clipboard command palette. Save text snippets and paste
-                  them instantly from anywhere on your Mac.
-                </p>
-              </div>
-              <div className="flex flex-col gap-3 w-full max-w-xs mt-2">
-                <div className="flex items-center gap-3 text-left p-3 rounded-lg bg-accent/10">
-                  <Command className="h-4 w-4 text-primary shrink-0" />
-                  <span className="text-[12px] text-muted-foreground">
-                    Open the palette with a hotkey from any app
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 text-left p-3 rounded-lg bg-accent/10">
-                  <Keyboard className="h-4 w-4 text-primary shrink-0" />
-                  <span className="text-[12px] text-muted-foreground">
-                    Type to search, press Enter to paste
-                  </span>
-                </div>
-              </div>
-            </motion.div>
-          )}
+        <div className="flex flex-wrap gap-1.5">
+          <span className="status-pill">
+            {formatShortcut(props.settings?.globalShortcut)}
+          </span>
+          <span
+            className={
+              props.permissionGranted
+                ? "status-pill status-pill--success"
+                : "status-pill status-pill--warning"
+            }
+          >
+            {props.permissionGranted ? "Accessibility ready" : "Access needed"}
+          </span>
+        </div>
 
-          {step === "accessibility" && (
-            <motion.div
-              key="accessibility"
-              variants={slideUp}
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-              className="flex flex-col items-center text-center gap-5"
-            >
-              <div
-                className={`h-14 w-14 rounded-2xl flex items-center justify-center ${
-                  props.permissionGranted
-                    ? "bg-emerald-500/10"
-                    : "bg-destructive/10"
-                }`}
+        <ol className="flex flex-col gap-1">
+          {STEPS.map((item, index) => {
+            const active = index === stepIndex;
+            const completed = index < stepIndex;
+
+            return (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  className={`list-item flex w-full items-start gap-3 px-3 py-3 text-left ${
+                    active ? "list-item-active" : ""
+                  }`}
+                  aria-current={active ? "step" : undefined}
+                  onClick={() => setStep(item.id)}
+                >
+                  <span
+                    className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-medium ${
+                      completed
+                        ? "border-transparent bg-primary text-primary-foreground"
+                        : active
+                          ? "border-primary text-foreground"
+                          : "border-border text-muted-foreground"
+                    }`}
+                    aria-hidden="true"
+                  >
+                    {completed ? <Check className="h-3.5 w-3.5" /> : index + 1}
+                  </span>
+                  <span className="space-y-1">
+                    <span className="block text-[13.5px] font-semibold text-foreground">
+                      {item.label}
+                    </span>
+                    <span className="block text-[12px] leading-relaxed text-muted-foreground">
+                      {item.note}
+                    </span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </aside>
+
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="flex-1 px-5 py-6 md:px-8">
+          <AnimatePresence mode="wait">
+            {step === "review" ? (
+              <motion.div
+                key="review"
+                variants={slideUp}
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
+                className="flex flex-col gap-6"
               >
-                {props.permissionGranted ? (
-                  <Check className="h-7 w-7 text-emerald-400" />
-                ) : (
-                  <ShieldAlert className="h-7 w-7 text-destructive" />
-                )}
-              </div>
-              <div className="flex flex-col gap-2">
-                <h2 className="text-lg font-bold text-foreground tracking-tight">
-                  Accessibility Permission
-                </h2>
-                <p className="text-[13px] text-muted-foreground/60 leading-relaxed max-w-xs mx-auto">
-                  QuickCommand needs Accessibility access to paste snippets into
-                  other apps.
-                </p>
-              </div>
-              <div className="flex flex-col gap-2.5 w-full max-w-xs mt-1">
-                <Button
-                  className="w-full gap-2 pressable"
-                  variant={props.permissionGranted ? "secondary" : "default"}
-                  onClick={() => void props.onAccessibilityPrompt()}
-                >
-                  {props.permissionGranted ? (
-                    <>
-                      <Check className="h-4 w-4" />
-                      Permission Granted
-                    </>
-                  ) : (
-                    <>
-                      <ShieldAlert className="h-4 w-4" />
-                      Grant Access
-                    </>
-                  )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground/50 text-[12px]"
-                  onClick={() => void props.onAccessibilityOpen()}
-                >
-                  Open System Settings manually →
-                </Button>
-              </div>
-            </motion.div>
-          )}
+                <div className="space-y-2">
+                  <p className="section-label">{currentStep.label}</p>
+                  <h3 className="text-[22px] font-semibold tracking-[-0.015em] text-foreground">
+                    Two things to set up, then it disappears
+                  </h3>
+                  <p className="max-w-[58ch] text-[14px] leading-relaxed text-muted-foreground">
+                    Accessibility access lets QuickCommand paste into the active
+                    app. A global shortcut gives you one consistent way to call
+                    the palette from anywhere on your Mac.
+                  </p>
+                </div>
+                <ul className="flex flex-col gap-3 text-[13.5px] leading-relaxed text-foreground">
+                  <li className="flex gap-3">
+                    <span
+                      className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
+                      aria-hidden="true"
+                    />
+                    <span>
+                      Search snippets from the palette without leaving your
+                      current app.
+                    </span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span
+                      className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
+                      aria-hidden="true"
+                    />
+                    <span>
+                      Paste saved text exactly as written, including
+                      placeholders you fill at the moment of paste.
+                    </span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span
+                      className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
+                      aria-hidden="true"
+                    />
+                    <span>
+                      Manage longer snippets and behavior settings later from
+                      the full library window.
+                    </span>
+                  </li>
+                </ul>
+              </motion.div>
+            ) : null}
 
-          {step === "hotkey" && (
-            <motion.div
-              key="hotkey"
-              variants={slideUp}
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-              className="flex flex-col items-center text-center gap-5"
-            >
-              <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
-                <Keyboard className="h-7 w-7 text-primary" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <h2 className="text-lg font-bold text-foreground tracking-tight">
-                  Configure Hotkey
-                </h2>
-                <p className="text-[13px] text-muted-foreground/60 leading-relaxed max-w-xs mx-auto">
-                  Set a global shortcut to summon QuickCommand from anywhere.
-                </p>
-              </div>
-              <div className="w-full max-w-xs mt-1">
+            {step === "accessibility" ? (
+              <motion.div
+                key="accessibility"
+                variants={slideUp}
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
+                className="flex flex-col gap-6"
+              >
+                <div className="space-y-2">
+                  <p className="section-label">{currentStep.label}</p>
+                  <h3 className="text-[22px] font-semibold tracking-[-0.015em] text-foreground">
+                    Allow paste automation
+                  </h3>
+                  <p className="max-w-[58ch] text-[14px] leading-relaxed text-muted-foreground">
+                    Without Accessibility access, QuickCommand can search your
+                    snippets but not paste them into the app you are using.
+                    macOS will ask you to confirm in System Settings.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-[10px] border border-border bg-secondary/40 px-4 py-3">
+                  <div className="space-y-0.5">
+                    <p className="text-[13px] font-medium text-foreground">
+                      {props.permissionGranted
+                        ? "Access granted"
+                        : "Access still needed"}
+                    </p>
+                    <p className="text-[12px] text-muted-foreground">
+                      {props.permissionGranted
+                        ? "QuickCommand can paste into other apps."
+                        : "QuickCommand can search but cannot paste yet."}
+                    </p>
+                  </div>
+                  <span
+                    className={
+                      props.permissionGranted
+                        ? "status-pill status-pill--success"
+                        : "status-pill status-pill--warning"
+                    }
+                  >
+                    {props.permissionGranted ? "Ready" : "Required"}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    className="gap-2"
+                    variant={props.permissionGranted ? "outline" : "default"}
+                    onClick={() => void props.onAccessibilityPrompt()}
+                  >
+                    {props.permissionGranted ? (
+                      <>
+                        <Check className="h-4 w-4" />
+                        Re-check access
+                      </>
+                    ) : (
+                      <>
+                        <ShieldAlert className="h-4 w-4" />
+                        Grant access
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => void props.onAccessibilityOpen()}
+                  >
+                    Open System Settings
+                  </Button>
+                </div>
+              </motion.div>
+            ) : null}
+
+            {step === "shortcut" ? (
+              <motion.div
+                key="shortcut"
+                variants={slideUp}
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
+                className="flex flex-col gap-6"
+              >
+                <div className="space-y-2">
+                  <p className="section-label">{currentStep.label}</p>
+                  <h3 className="text-[22px] font-semibold tracking-[-0.015em] text-foreground">
+                    Pick a shortcut you will remember
+                  </h3>
+                  <p className="max-w-[58ch] text-[14px] leading-relaxed text-muted-foreground">
+                    Choose one that does not collide with your editor, browser,
+                    or terminal bindings. You can change it any time later from
+                    the library settings.
+                  </p>
+                </div>
                 {props.settings ? (
                   <SettingsPanel
                     settings={props.settings}
                     onSaveSettings={props.onSaveSettings}
                   />
                 ) : null}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Navigation footer */}
-      <div className="flex items-center justify-between px-8 py-5 border-t border-border/20">
-        <div>
-          {stepIndex > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-1.5 text-muted-foreground/50 pressable"
-              onClick={prev}
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Back
-            </Button>
-          )}
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
         </div>
-        <div>
-          {stepIndex < STEPS.length - 1 ? (
-            <Button
-              size="sm"
-              className="gap-1.5 pressable"
-              onClick={next}
-            >
-              Next
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              className="gap-1.5 pressable"
-              onClick={() => void props.onCompleteOnboarding()}
-            >
-              Get Started
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
-          )}
+
+        <div className="flex items-center justify-between border-t border-border px-5 py-4 md:px-8">
+          <div>
+            {stepIndex > 0 ? (
+              <Button variant="ghost" className="gap-2" onClick={prev}>
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </Button>
+            ) : null}
+          </div>
+          <div>
+            {stepIndex < STEPS.length - 1 ? (
+              <Button className="gap-2" onClick={next}>
+                Next
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                className="gap-2"
+                onClick={() => void props.onCompleteOnboarding()}
+              >
+                Open library
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </motion.section>
