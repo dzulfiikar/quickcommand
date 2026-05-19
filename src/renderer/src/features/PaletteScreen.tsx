@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, CornerDownLeft, Plus } from "lucide-react";
+import { CornerDownLeft, Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { fadeIn } from "@/lib/motion";
@@ -40,13 +40,6 @@ export function PaletteScreen(props: ScreenProps) {
   const showEmpty = props.filtered.length === 0;
   const emptyHeadline = useMemo(
     () => (query ? "Nothing matches" : "Save your first snippet"),
-    [query],
-  );
-  const emptyHint = useMemo(
-    () =>
-      query
-        ? "Try a shorter or different word."
-        : "Press the + above to add the first one.",
     [query],
   );
 
@@ -173,7 +166,11 @@ export function PaletteScreen(props: ScreenProps) {
               <input
                 ref={inputRef}
                 aria-label="Search snippets"
-                className="flex-1 bg-transparent text-[16px] text-foreground placeholder:text-muted-foreground outline-none"
+                aria-controls="palette-listbox"
+                aria-activedescendant={
+                  showEmpty ? undefined : `palette-option-${selectedIndex}`
+                }
+                className="flex-1 bg-transparent text-[15px] text-foreground placeholder:text-muted-foreground outline-none"
                 placeholder="Search snippets"
                 type="text"
                 value={query}
@@ -199,51 +196,58 @@ export function PaletteScreen(props: ScreenProps) {
             </div>
 
             {showEmpty ? (
-              <div className="flex flex-col items-center gap-1 px-5 py-12 text-center">
-                <p className="text-[14px] font-semibold text-foreground">
+              <div className="flex flex-col items-center gap-2 px-5 py-12 text-center">
+                <p className="text-[15px] font-semibold text-foreground">
                   {emptyHeadline}
                 </p>
-                <p className="text-[13px] text-muted-foreground">
-                  {emptyHint}
+                <p className="text-[12px] text-muted-foreground">
+                  {query ? (
+                    <>
+                      Try a shorter word, or press <span className="kbd">esc</span> to clear.
+                    </>
+                  ) : (
+                    <>
+                      Press <span className="kbd">+</span> above to add the first one.
+                    </>
+                  )}
                 </p>
               </div>
             ) : (
-              <ul className="max-h-[24rem] overflow-y-auto p-2">
+              <ul
+                id="palette-listbox"
+                role="listbox"
+                aria-label="Snippets"
+                className="max-h-[24rem] overflow-y-auto p-2"
+              >
                 {props.filtered.map((snippet, index) => {
                   const active = index === selectedIndex;
                   return (
                     <li key={snippet.id}>
                       <button
+                        id={`palette-option-${index}`}
                         type="button"
+                        role="option"
+                        aria-selected={active}
+                        tabIndex={-1}
                         className={cn(
-                          "list-item flex w-full items-center gap-3 px-3 py-2.5 text-left",
+                          "list-item flex h-11 w-full items-center gap-3 px-3 text-left",
                           active && "list-item-active",
                         )}
                         onClick={() => handleInsert(snippet.id)}
                         onMouseEnter={() => setSelectedIndex(index)}
                       >
-                        <div className="min-w-0 flex-1">
-                          <p className="snippet-preview-title text-[14px] font-medium text-foreground">
-                            {getSnippetPreviewText(snippet.title)}
-                          </p>
-                          <SnippetPreviewLine
-                            parts={getSnippetPreviewParts(snippet.value)}
-                            className="snippet-preview-value mt-0.5 block font-mono text-[12px] text-muted-foreground"
-                          />
-                        </div>
-                        <div className="flex shrink-0 items-center gap-2 text-[11px] text-muted-foreground">
-                          {snippet.useCount > 0 ? (
-                            <span className="font-mono tabular-nums">
-                              {snippet.useCount}×
-                            </span>
-                          ) : null}
-                          {active ? (
-                            <ArrowRight
-                              className="h-3.5 w-3.5 text-foreground"
-                              aria-hidden="true"
-                            />
-                          ) : null}
-                        </div>
+                        <p className="snippet-preview-title min-w-0 shrink-0 max-w-[40%] text-[13.5px] font-medium text-foreground">
+                          {getSnippetPreviewText(snippet.title)}
+                        </p>
+                        <SnippetPreviewLine
+                          parts={getSnippetPreviewParts(snippet.value)}
+                          className="snippet-preview-value block min-w-0 flex-1 font-mono text-[11.5px] text-muted-foreground"
+                        />
+                        {snippet.useCount > 0 ? (
+                          <span className="shrink-0 font-mono text-[10.5px] tabular-nums text-muted-foreground">
+                            {snippet.useCount}×
+                          </span>
+                        ) : null}
                       </button>
                     </li>
                   );
