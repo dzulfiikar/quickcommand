@@ -55,17 +55,14 @@ export function OnboardingScreen(props: ScreenProps) {
       <aside className="flex flex-col gap-6 border-b border-border p-5 xl:border-b-0 xl:border-r">
         <div className="space-y-2">
           <p className="section-label">Setup</p>
-          <h2 className="text-[20px] font-semibold tracking-[-0.01em] text-foreground">
-            Three small things, then you are done
-          </h2>
-          <p className="max-w-[34ch] text-[13px] leading-relaxed text-muted-foreground">
-            QuickCommand only asks for what it needs to paste reliably. No
-            account, no sync, no cloud.
+          <p className="max-w-[34ch] text-[15px] leading-relaxed text-muted-foreground">
+            Three small things, then QuickCommand disappears. No account, no
+            sync, no cloud.
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-1.5">
-          <span className="status-pill">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="kbd">
             {formatShortcut(props.settings?.globalShortcut)}
           </span>
           <span
@@ -95,16 +92,14 @@ export function OnboardingScreen(props: ScreenProps) {
                   onClick={() => setStep(item.id)}
                 >
                   <span
-                    className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-medium ${
-                      completed
-                        ? "border-transparent bg-primary text-primary-foreground"
-                        : active
-                          ? "border-primary text-foreground"
-                          : "border-border text-muted-foreground"
-                    }`}
+                    className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border text-[12px] font-medium text-muted-foreground"
                     aria-hidden="true"
                   >
-                    {completed ? <Check className="h-3.5 w-3.5" /> : index + 1}
+                    {completed ? (
+                      <Check className="h-3.5 w-3.5 text-foreground" />
+                    ) : (
+                      index + 1
+                    )}
                   </span>
                   <span className="space-y-1">
                     <span className="block text-[13.5px] font-semibold text-foreground">
@@ -138,42 +133,24 @@ export function OnboardingScreen(props: ScreenProps) {
                   <h3 className="text-[22px] font-semibold tracking-[-0.015em] text-foreground">
                     Two things to set up, then it disappears
                   </h3>
-                  <p className="max-w-[58ch] text-[14px] leading-relaxed text-muted-foreground">
+                  <p className="max-w-[58ch] text-[15px] leading-relaxed text-muted-foreground">
                     Accessibility access lets QuickCommand paste into the active
                     app. A global shortcut gives you one consistent way to call
                     the palette from anywhere on your Mac.
                   </p>
                 </div>
-                <ul className="flex flex-col gap-3 text-[13.5px] leading-relaxed text-foreground">
-                  <li className="flex gap-3">
-                    <span
-                      className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
-                      aria-hidden="true"
-                    />
-                    <span>
-                      Search snippets from the palette without leaving your
-                      current app.
-                    </span>
+                <ul className="flex flex-col gap-2.5 text-[13.5px] leading-relaxed text-foreground">
+                  <li>
+                    Search snippets from the palette without leaving your
+                    current app.
                   </li>
-                  <li className="flex gap-3">
-                    <span
-                      className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
-                      aria-hidden="true"
-                    />
-                    <span>
-                      Paste saved text exactly as written, including
-                      placeholders you fill at the moment of paste.
-                    </span>
+                  <li>
+                    Paste saved text exactly as written, including placeholders
+                    you fill at the moment of paste.
                   </li>
-                  <li className="flex gap-3">
-                    <span
-                      className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
-                      aria-hidden="true"
-                    />
-                    <span>
-                      Manage longer snippets and behavior settings later from
-                      the full library window.
-                    </span>
+                  <li>
+                    Manage longer snippets and behavior settings later from the
+                    full library window.
                   </li>
                 </ul>
               </motion.div>
@@ -193,15 +170,15 @@ export function OnboardingScreen(props: ScreenProps) {
                   <h3 className="text-[22px] font-semibold tracking-[-0.015em] text-foreground">
                     Allow paste automation
                   </h3>
-                  <p className="max-w-[58ch] text-[14px] leading-relaxed text-muted-foreground">
+                  <p className="max-w-[58ch] text-[15px] leading-relaxed text-muted-foreground">
                     Without Accessibility access, QuickCommand can search your
                     snippets but not paste them into the app you are using.
                     macOS will ask you to confirm in System Settings.
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-[10px] border border-border bg-secondary/40 px-4 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-border bg-secondary/40 px-4 py-3">
                   <div className="space-y-0.5">
-                    <p className="text-[13px] font-medium text-foreground">
+                    <p className="text-[13.5px] font-medium text-foreground">
                       {props.permissionGranted
                         ? "Access granted"
                         : "Access still needed"}
@@ -264,7 +241,7 @@ export function OnboardingScreen(props: ScreenProps) {
                   <h3 className="text-[22px] font-semibold tracking-[-0.015em] text-foreground">
                     Pick a shortcut you will remember
                   </h3>
-                  <p className="max-w-[58ch] text-[14px] leading-relaxed text-muted-foreground">
+                  <p className="max-w-[58ch] text-[15px] leading-relaxed text-muted-foreground">
                     Choose one that does not collide with your editor, browser,
                     or terminal bindings. You can change it any time later from
                     the library settings.
