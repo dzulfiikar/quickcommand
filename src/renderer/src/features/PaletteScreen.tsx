@@ -1,8 +1,8 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { CornerDownLeft, Plus } from "lucide-react";
+import { CornerDownLeft, Plus, Search } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { fadeIn } from "@/lib/motion";
+import { fadeIn, surfaceIn } from "@/lib/motion";
 import {
   getSnippetPreviewParts,
   getSnippetPreviewText,
@@ -94,10 +94,10 @@ export function PaletteScreen(props: ScreenProps) {
   if (paramSnippet) {
     return (
       <motion.div
-        variants={fadeIn}
+        variants={surfaceIn}
         initial="hidden"
         animate="visible"
-        className="surface mx-auto w-full max-w-[44rem] overflow-hidden"
+        className="surface-float mx-auto w-full max-w-[44rem] overflow-hidden"
       >
         <div className="p-5">
           <ParamInputForm
@@ -113,10 +113,10 @@ export function PaletteScreen(props: ScreenProps) {
 
   return (
     <motion.div
-      variants={fadeIn}
+      variants={surfaceIn}
       initial="hidden"
       animate="visible"
-      className="surface mx-auto w-full max-w-[44rem] overflow-hidden"
+      className="surface-float mx-auto w-full max-w-[44rem] overflow-hidden"
       onKeyDown={handleKeyDown}
     >
       <AnimatePresence mode="wait">
@@ -132,7 +132,7 @@ export function PaletteScreen(props: ScreenProps) {
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1">
                 <p className="section-label">New snippet</p>
-                <h2 className="text-[17px] font-semibold tracking-[-0.005em] text-foreground">
+                <h2 className="text-xl font-semibold tracking-[-0.005em] text-foreground">
                   Save it once, paste it forever
                 </h2>
               </div>
@@ -163,6 +163,10 @@ export function PaletteScreen(props: ScreenProps) {
             exit="exit"
           >
             <div className="flex items-center gap-3 border-b border-border px-5 py-4">
+              <Search
+                className="h-[18px] w-[18px] shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
               <input
                 ref={inputRef}
                 aria-label="Search snippets"
@@ -170,8 +174,8 @@ export function PaletteScreen(props: ScreenProps) {
                 aria-activedescendant={
                   showEmpty ? undefined : `palette-option-${selectedIndex}`
                 }
-                className="flex-1 bg-transparent text-[15px] text-foreground placeholder:text-muted-foreground outline-none"
-                placeholder="Search snippets"
+                className="flex-1 bg-transparent text-lg text-foreground placeholder:text-muted-foreground/80 outline-none"
+                placeholder="Search snippets…"
                 type="text"
                 value={query}
                 onChange={(event) => {
@@ -179,7 +183,7 @@ export function PaletteScreen(props: ScreenProps) {
                   setQuery(event.target.value);
                 }}
               />
-              <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
+              <span className="rounded-md bg-secondary/60 px-1.5 py-0.5 font-mono text-xs tabular-nums text-muted-foreground">
                 {props.filtered.length}
               </span>
               <Button
@@ -197,17 +201,19 @@ export function PaletteScreen(props: ScreenProps) {
 
             {showEmpty ? (
               <div className="flex flex-col items-center gap-2 px-5 py-12 text-center">
-                <p className="text-[15px] font-semibold text-foreground">
+                <p className="text-lg font-semibold text-foreground">
                   {emptyHeadline}
                 </p>
-                <p className="text-[12px] text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   {query ? (
                     <>
-                      Try a shorter word, or press <span className="kbd">esc</span> to clear.
+                      Try a shorter word, or press{" "}
+                      <span className="kbd">esc</span> to clear.
                     </>
                   ) : (
                     <>
-                      Press <span className="kbd">+</span> above to add the first one.
+                      Press <span className="kbd">+</span> above to add the
+                      first one.
                     </>
                   )}
                 </p>
@@ -230,21 +236,21 @@ export function PaletteScreen(props: ScreenProps) {
                         aria-selected={active}
                         tabIndex={-1}
                         className={cn(
-                          "list-item flex h-11 w-full items-center gap-3 px-3 text-left",
+                          "list-item flex h-12 w-full items-center gap-3 pl-4 pr-3 text-left",
                           active && "list-item-active",
                         )}
                         onClick={() => handleInsert(snippet.id)}
                         onMouseEnter={() => setSelectedIndex(index)}
                       >
-                        <p className="snippet-preview-title min-w-0 shrink-0 max-w-[40%] text-[13.5px] font-medium text-foreground">
+                        <p className="snippet-preview-title min-w-0 shrink-0 max-w-[40%] text-base font-medium text-foreground">
                           {getSnippetPreviewText(snippet.title)}
                         </p>
                         <SnippetPreviewLine
                           parts={getSnippetPreviewParts(snippet.value)}
-                          className="snippet-preview-value block min-w-0 flex-1 font-mono text-[11.5px] text-muted-foreground"
+                          className="snippet-preview-value block min-w-0 flex-1 font-mono text-xs text-muted-foreground"
                         />
                         {snippet.useCount > 0 ? (
-                          <span className="shrink-0 font-mono text-[10.5px] tabular-nums text-muted-foreground">
+                          <span className="shrink-0 font-mono text-2xs tabular-nums text-muted-foreground">
                             {snippet.useCount}×
                           </span>
                         ) : null}
@@ -255,7 +261,7 @@ export function PaletteScreen(props: ScreenProps) {
               </ul>
             )}
 
-            <div className="flex items-center justify-between gap-4 border-t border-border px-5 py-3 text-[11px] text-muted-foreground">
+            <div className="flex items-center justify-between gap-4 border-t border-border px-5 py-3 text-xs text-muted-foreground">
               {showEmpty ? (
                 <span className="inline-flex items-center gap-1.5">
                   <span className="kbd">esc</span>
@@ -269,10 +275,7 @@ export function PaletteScreen(props: ScreenProps) {
                   </span>
                   <span className="inline-flex items-center gap-1.5">
                     <span className="kbd">
-                      <CornerDownLeft
-                        className="h-3 w-3"
-                        aria-hidden="true"
-                      />
+                      <CornerDownLeft className="h-3 w-3" aria-hidden="true" />
                     </span>
                     Paste
                   </span>

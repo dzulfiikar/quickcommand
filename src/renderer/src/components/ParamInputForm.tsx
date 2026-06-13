@@ -60,7 +60,7 @@ export const ParamInputForm = memo(function ParamInputForm(props: {
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 space-y-1">
           <p className="section-label">Fill in</p>
-          <h3 className="snippet-text-wrap text-[15px] font-semibold leading-snug text-foreground">
+          <h3 className="snippet-text-wrap text-lg font-semibold leading-snug text-foreground">
             {getSnippetPreviewText(props.snippetTitle)}
           </h3>
         </div>
@@ -78,7 +78,7 @@ export const ParamInputForm = memo(function ParamInputForm(props: {
           <div key={name} className="space-y-1.5">
             <Label
               htmlFor={`param-${name}`}
-              className="text-[12px] font-medium text-foreground"
+              className="text-sm font-medium text-foreground"
             >
               {humanize(name)}
             </Label>

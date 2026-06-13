@@ -12,7 +12,8 @@ type FieldErrors = { title?: string; value?: string };
 
 function validate(draft: SnippetInput): FieldErrors {
   const errors: FieldErrors = {};
-  if (!draft.title.trim()) errors.title = "Add a title so you can find it later";
+  if (!draft.title.trim())
+    errors.title = "Add a title so you can find it later";
   if (!draft.value.trim()) errors.value = "Add the text you want to paste";
   return errors;
 }
@@ -94,7 +95,7 @@ export const SnippetForm = memo(function SnippetForm(props: {
       <div className="flex flex-col gap-1.5">
         <Label
           htmlFor={titleId}
-          className={`text-[12px] ${titleError ? "text-destructive" : "text-foreground"}`}
+          className={`text-sm ${titleError ? "text-destructive" : "text-foreground"}`}
         >
           Title
         </Label>
@@ -115,7 +116,7 @@ export const SnippetForm = memo(function SnippetForm(props: {
         {titleError ? (
           <p
             id={`${titleId}-error`}
-            className="text-[11px] text-destructive-foreground"
+            className="text-xs text-destructive-foreground"
           >
             {titleError}
           </p>
@@ -126,12 +127,14 @@ export const SnippetForm = memo(function SnippetForm(props: {
         <div className="flex items-center justify-between">
           <Label
             htmlFor={valueId}
-            className={`text-[12px] ${valueError ? "text-destructive" : "text-foreground"}`}
+            className={`text-sm ${valueError ? "text-destructive" : "text-foreground"}`}
           >
             Snippet text
           </Label>
           <p className="field-note">
-            Wrap a placeholder like <code className="font-mono text-foreground/80">{"{name}"}</code> to fill it before paste.
+            Wrap a placeholder like{" "}
+            <code className="font-mono text-foreground/80">{"{name}"}</code> to
+            fill it before paste.
           </p>
         </div>
         <Textarea
@@ -139,7 +142,7 @@ export const SnippetForm = memo(function SnippetForm(props: {
           ref={textareaRef}
           placeholder="git commit --amend --no-edit"
           rows={4}
-          className="max-h-[260px] resize-y overflow-y-auto font-mono text-[13px] leading-relaxed"
+          className="max-h-[260px] resize-y overflow-y-auto font-mono text-base leading-relaxed"
           aria-invalid={valueError ? true : undefined}
           aria-describedby={valueError ? `${valueId}-error` : undefined}
           value={props.draft.value}
@@ -154,7 +157,7 @@ export const SnippetForm = memo(function SnippetForm(props: {
         {valueError ? (
           <p
             id={`${valueId}-error`}
-            className="text-[11px] text-destructive-foreground"
+            className="text-xs text-destructive-foreground"
           >
             {valueError}
           </p>
@@ -170,7 +173,7 @@ export const SnippetForm = memo(function SnippetForm(props: {
             <Input
               id={paramId}
               aria-label="Parameter name"
-              className="h-8 w-32 font-mono text-[12px]"
+              className="h-8 w-32 font-mono text-sm"
               type="text"
               placeholder="name"
               value={paramName}
@@ -229,7 +232,7 @@ export const SnippetForm = memo(function SnippetForm(props: {
               <Badge
                 key={p}
                 variant="outline"
-                className="rounded-md px-1.5 py-0.5 font-mono text-[10.5px]"
+                className="rounded-md px-1.5 py-0.5 font-mono text-2xs"
               >
                 {`{${p}}`}
               </Badge>
@@ -241,7 +244,7 @@ export const SnippetForm = memo(function SnippetForm(props: {
       <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
         {props.onDelete ? (
           confirming ? (
-            <div className="flex flex-1 items-center gap-2 rounded-md border px-3 py-2 text-[12px]" style={{ background: "var(--error-background)", borderColor: "var(--error-border)", color: "var(--error-foreground)" }}>
+            <div className="notice notice--error flex flex-1 items-center gap-2 rounded-md px-3 py-2 text-sm">
               <span className="flex-1">
                 Delete this snippet? It cannot be undone.
               </span>

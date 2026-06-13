@@ -17,7 +17,7 @@ import {
 } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { fadeIn } from "@/lib/motion";
+import { surfaceIn } from "@/lib/motion";
 import {
   getSnippetPreviewParts,
   getSnippetPreviewText,
@@ -39,10 +39,10 @@ import { getTrayPageItems, getTrayPaginationState } from "./tray-pagination";
 function TrayShell(props: { children: React.ReactNode }) {
   return (
     <motion.div
-      variants={fadeIn}
+      variants={surfaceIn}
       initial="hidden"
       animate="visible"
-      className="surface flex h-full min-h-0 flex-col overflow-hidden"
+      className="surface-float flex h-full min-h-0 flex-col overflow-hidden"
     >
       {props.children}
     </motion.div>
@@ -260,8 +260,10 @@ export function TrayScreen(props: ScreenProps) {
                 <p className="section-label">
                   {props.editingId ? "Editing" : "New"}
                 </p>
-                <h2 className="text-[17px] font-semibold tracking-[-0.005em] text-foreground">
-                  {props.editingId ? "Edit snippet" : "Save it once, paste it forever"}
+                <h2 className="text-xl font-semibold tracking-[-0.005em] text-foreground">
+                  {props.editingId
+                    ? "Edit snippet"
+                    : "Save it once, paste it forever"}
                 </h2>
               </div>
               <Button
@@ -296,7 +298,7 @@ export function TrayScreen(props: ScreenProps) {
         />
         <input
           aria-label="Search snippets"
-          className="flex-1 bg-transparent text-[14px] text-foreground placeholder:text-muted-foreground outline-none"
+          className="flex-1 bg-transparent text-md text-foreground placeholder:text-muted-foreground outline-none"
           placeholder="Search snippets"
           ref={queryInputRef}
           type="text"
@@ -310,7 +312,7 @@ export function TrayScreen(props: ScreenProps) {
         />
         <span
           aria-label={`${props.filtered.length} snippets`}
-          className="font-mono text-[11px] tabular-nums text-muted-foreground"
+          className="font-mono text-xs tabular-nums text-muted-foreground"
         >
           {props.filtered.length}
         </span>
@@ -360,15 +362,15 @@ export function TrayScreen(props: ScreenProps) {
                         handleRowKeyDown(event, snippet, index)
                       }
                     >
-                      <p className="snippet-preview-title min-w-0 shrink-0 max-w-[40%] text-[13.5px] font-medium text-foreground">
+                      <p className="snippet-preview-title min-w-0 shrink-0 max-w-[40%] text-base font-medium text-foreground">
                         {getSnippetPreviewText(snippet.title)}
                       </p>
                       <SnippetPreviewLine
                         parts={getSnippetPreviewParts(snippet.value)}
-                        className="snippet-preview-value block min-w-0 flex-1 font-mono text-[11.5px] text-muted-foreground"
+                        className="snippet-preview-value block min-w-0 flex-1 font-mono text-xs text-muted-foreground"
                       />
                       {snippet.useCount > 0 ? (
-                        <span className="shrink-0 font-mono text-[10.5px] tabular-nums text-muted-foreground">
+                        <span className="shrink-0 font-mono text-2xs tabular-nums text-muted-foreground">
                           {snippet.useCount}×
                         </span>
                       ) : null}
@@ -401,24 +403,26 @@ export function TrayScreen(props: ScreenProps) {
           </ScrollArea>
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 py-10 text-center">
-            <p className="text-[14px] font-semibold text-foreground">
+            <p className="text-md font-semibold text-foreground">
               {query ? "Nothing matches" : "No snippets yet"}
             </p>
-            <p className="text-[12px] text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               {query ? (
                 <>
-                  Try a shorter word, or press <kbd className="kbd">Esc</kbd> to clear.
+                  Try a shorter word, or press <kbd className="kbd">Esc</kbd> to
+                  clear.
                 </>
               ) : (
                 <>
-                  Press <kbd className="kbd">+</kbd> above to create your first one.
+                  Press <kbd className="kbd">+</kbd> above to create your first
+                  one.
                 </>
               )}
             </p>
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-2 text-[11px] text-muted-foreground">
+        <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-2 text-xs text-muted-foreground">
           <div className="flex items-center gap-3">
             {visibleSnippets.length > 0 ? (
               <>
@@ -467,30 +471,33 @@ export function TrayScreen(props: ScreenProps) {
 
       <footer className="grid grid-cols-3 gap-1 border-t border-border p-2">
         <button
-          className="list-item flex items-center gap-2 px-3 py-3 text-left text-[13px] font-medium text-foreground"
+          className="list-item pressable flex flex-col items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-foreground"
           type="button"
           onClick={() => void props.onShowLibrary()}
         >
           <Library
-            className="h-4 w-4 text-muted-foreground"
+            className="h-[18px] w-[18px] text-muted-foreground"
             aria-hidden="true"
           />
           Library
         </button>
         <button
-          className="list-item flex items-center gap-2 px-3 py-3 text-left text-[13px] font-medium text-foreground"
+          className="list-item pressable flex flex-col items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-foreground"
           type="button"
           onClick={() => setShowAbout(true)}
         >
-          <Info className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          <Info
+            className="h-[18px] w-[18px] text-muted-foreground"
+            aria-hidden="true"
+          />
           About
         </button>
         <button
-          className="list-item flex items-center gap-2 px-3 py-3 text-left text-[13px] font-medium text-destructive"
+          className="list-item pressable flex flex-col items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-destructive hover:!bg-destructive/12"
           type="button"
           onClick={() => void props.onQuit()}
         >
-          <LogOut className="h-4 w-4" aria-hidden="true" />
+          <LogOut className="h-[18px] w-[18px]" aria-hidden="true" />
           Quit
         </button>
       </footer>

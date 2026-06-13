@@ -43,6 +43,8 @@ const defaultSettings: Settings = {
   pasteRestoreDelayMs: 150,
   firstRunComplete: true,
   showWindowOnStartup: false,
+  theme: "system",
+  palette: "sand",
 };
 
 let settings = { ...defaultSettings };

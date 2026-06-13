@@ -1,9 +1,4 @@
-import {
-  AlertTriangle,
-  Loader2,
-  ShieldAlert,
-  X,
-} from "lucide-react";
+import { AlertTriangle, Loader2, ShieldAlert, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -178,6 +173,34 @@ export function App() {
       return () => window.removeEventListener("keydown", handler);
     }
   }, [kind]);
+
+  // Resolve the theme preference to a concrete data-theme attribute on the
+  // document root. "system" follows the OS, re-resolving when it changes.
+  const themePreference = state.settings?.theme ?? "system";
+  useEffect(() => {
+    const root = document.documentElement;
+
+    if (themePreference !== "system") {
+      root.dataset.theme = themePreference;
+      return;
+    }
+
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const apply = () => {
+      root.dataset.theme = media.matches ? "dark" : "light";
+    };
+    apply();
+    media.addEventListener("change", apply);
+    return () => media.removeEventListener("change", apply);
+  }, [themePreference]);
+
+  // Resolve the color palette to a concrete data-palette attribute. This axis
+  // is independent of light/dark: each palette ships both variants in CSS, so
+  // the data-theme effect above picks which one shows.
+  const palettePreference = state.settings?.palette ?? "sand";
+  useEffect(() => {
+    document.documentElement.dataset.palette = palettePreference;
+  }, [palettePreference]);
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -409,7 +432,7 @@ export function App() {
     state.error?.toLowerCase().includes("accessibility") ?? false;
 
   return (
-    <div className="app-shell h-screen flex flex-col overflow-hidden">
+    <div className="app-shell h-[100dvh] flex flex-col overflow-hidden">
       <main
         className={cn(
           "flex-1 flex min-h-0 flex-col p-4",
@@ -475,10 +498,7 @@ export function App() {
                     size="sm"
                     onClick={() => void promptAccessibility()}
                   >
-                    <ShieldAlert
-                      className="h-3.5 w-3.5"
-                      aria-hidden="true"
-                    />
+                    <ShieldAlert className="h-3.5 w-3.5" aria-hidden="true" />
                     Grant access
                   </Button>
                 ) : null
@@ -501,13 +521,15 @@ function Toast(props: {
   onDismiss(): void;
 }) {
   const variantClass =
-    props.variant === "warning" ? "notice notice--warning" : "notice notice--error";
+    props.variant === "warning"
+      ? "notice notice--warning"
+      : "notice notice--error";
 
   return (
     <div
       role="alert"
       className={cn(
-        "pointer-events-auto flex w-full max-w-[36rem] items-center gap-3 px-4 py-3 text-[13px]",
+        "pointer-events-auto flex w-full max-w-[36rem] items-center gap-3 px-4 py-3 text-base",
         variantClass,
       )}
     >

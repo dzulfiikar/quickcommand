@@ -3,9 +3,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* QuickCommand renderer theme.
-   See DESIGN.md ("The Hand-Built Loupe"): cool blue-grey tonal ladder,
-   one warm accent (Late-Light Sand), no shadows, no glass. */
+/* QuickCommand renderer theme — "Loupe, refined".
+   Cool blue-grey tonal ladder, one warm accent (Late-Light Sand).
+   Evolved from the original flat Loupe with a calibrated elevation
+   system: soft layered shadows + a hairline top highlight stand in
+   for the old hard borders, and the warm accent now carries a gentle
+   glow so the primary action and the active row read as the signature. */
 
 @theme inline {
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Avenir Next", system-ui, sans-serif;
@@ -19,6 +22,7 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-accent-text: var(--accent-text);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -30,22 +34,96 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-focus-ring: var(--focus-ring);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 10px);
+
+  /* Type scale. One named ladder for the whole renderer so utilities and the
+     CSS rules below share a single source of truth. Overrides Tailwind's
+     defaults at these names on purpose. Line-height is set per use-site.
+       2xs  micro mono labels (use counts, inline param chips)
+       xs   kbd chips, list counts, captions, helper/error text
+       sm   field notes, footer meta, secondary labels
+       base body + control text (buttons, inputs, list rows)
+       md   search inputs
+       lg   palette input, onboarding body, fill-in title
+       xl   dialog / sheet titles
+       2xl  screen headings (detail, onboarding step) */
+  --text-2xs: 10.5px;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 13px;
+  --text-md: 14px;
+  --text-lg: 15px;
+  --text-xl: 17px;
+  --text-2xl: 22px;
+
+  /* Pin line-height to the body default (1.5) for every step so swapping the
+     old size-only `text-[Npx]` classes for these tokens does not silently
+     import Tailwind's tighter per-size defaults. Headings that want tighter
+     spacing set an explicit leading-* utility, which overrides these. */
+  --text-2xs--line-height: 1.5;
+  --text-xs--line-height: 1.5;
+  --text-sm--line-height: 1.5;
+  --text-base--line-height: 1.5;
+  --text-md--line-height: 1.5;
+  --text-lg--line-height: 1.5;
+  --text-xl--line-height: 1.5;
+  --text-2xl--line-height: 1.5;
 }
 
 :root {
   --radius: 0.625rem;
 
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Focus indicator. Deliberately NOT the accent: an accent-hued ring can't
+     clear 3:1 against a pale surface by hue alone. The foreground ink is the
+     strongest neutral each theme already owns (dark on light themes, light on
+     dark), so this resolves per-theme to an 8:1+ ring. Paired with an offset
+     gap on the control, focus is unmistakable in every palette. */
+  --focus-ring: var(--foreground);
+}
+
+/* ── Theming model ────────────────────────────────────────────────────
+   Two orthogonal axes drive every color in the app:
+
+     data-theme   = system | light | dark   (the *mode*)
+     data-palette = sand | nord | dracula | …(the *hue family*)
+
+   Each palette ships a full dark + light variant. The renderer resolves
+   "system" in JS and always writes a concrete data-theme, and always
+   writes a concrete data-palette, so the cascade below never has to guess.
+
+   The whole app reads exclusively from the semantic tokens defined in each
+   block (--background, --surface-*, --foreground, --primary*, status
+   colors, elevation). Redefining that ladder per palette re-tints every
+   screen and component for free — no component knows which palette is on.
+
+   "sand" is the original "Loupe, refined" look and is the default + the
+   :root fallback so existing installs never regress.
+   ──────────────────────────────────────────────────────────────────── */
+
+/* ── Sand — dark (default + explicit) ────────────────────────────────
+   Cool blue-grey tonal ladder, warm Late-Light Sand accent. :root with
+   no palette set falls back here, so a bare document is always valid. */
+:root,
+:root[data-theme="dark"],
+:root[data-palette="sand"],
+:root[data-palette="sand"][data-theme="dark"] {
+  color-scheme: dark;
+
   /* Tonal ladder, cool blue-grey. */
   --background: oklch(0.15 0.01 260);
-  --surface-1: oklch(0.18 0.014 260);
-  --surface-2: oklch(0.22 0.013 258);
-  --surface-3: oklch(0.27 0.014 258);
-  --surface-inset: oklch(0.12 0.009 252);
+  --surface-1: oklch(0.185 0.014 260);
+  --surface-2: oklch(0.225 0.013 258);
+  --surface-3: oklch(0.275 0.014 258);
+  --surface-inset: oklch(0.125 0.009 252);
 
   --foreground: oklch(0.97 0.01 85);
 
@@ -57,7 +135,11 @@
 
   /* Late-Light Sand, the one warm accent. */
   --primary: oklch(0.82 0.03 78);
+  --primary-bright: oklch(0.87 0.045 80);
+  --primary-deep: oklch(0.76 0.035 74);
   --primary-foreground: oklch(0.16 0.01 260);
+  --accent-text: oklch(0.82 0.03 78);
+  --accent-tint: oklch(0.82 0.03 78 / 12%);
 
   --secondary: var(--surface-3);
   --secondary-foreground: var(--foreground);
@@ -68,29 +150,927 @@
   --accent: var(--surface-3);
   --accent-foreground: var(--foreground);
 
-  --destructive: oklch(0.66 0.16 28);
+  /* Deepened so the white "Delete" label clears WCAG AA (>=4.5:1). */
+  --destructive: oklch(0.58 0.19 28);
   --destructive-foreground: oklch(0.99 0 0);
 
-  --border: oklch(1 0 0 / 12%);
+  --border: oklch(1 0 0 / 10%);
   --border-strong: oklch(1 0 0 / 18%);
-  --input: oklch(1 0 0 / 8%);
-  --ring: oklch(0.82 0.03 78 / 56%);
-  --list-active-bg: oklch(0.30 0.018 252);
-  --list-active-border: oklch(0.82 0.03 78 / 38%);
-  --overlay: oklch(0.10 0.008 260 / 72%);
+  --hairline: oklch(1 0 0 / 8%);
+  --highlight: oklch(1 0 0 / 7%);
+  --input: oklch(1 0 0 / 7%);
+  --ring: oklch(0.82 0.03 78 / 92%);
+  --list-active-bg: oklch(0.31 0.02 252);
+  --list-active-border: oklch(0.82 0.03 78 / 42%);
+  --overlay: oklch(0.10 0.008 260 / 64%);
+  --float-fill: oklch(0.225 0.013 258 / 82%);
+  --float-highlight: oklch(1 0 0 / 8%);
 
   --success-border: oklch(0.83 0.12 162 / 32%);
   --success-background: oklch(0.57 0.09 162 / 24%);
   --success-foreground: oklch(0.92 0.05 162);
+  --success-dot: oklch(0.78 0.14 162);
   --warning-border: oklch(0.86 0.13 92 / 32%);
   --warning-background: oklch(0.62 0.11 92 / 20%);
   --warning-foreground: oklch(0.95 0.05 95);
+  --warning-dot: oklch(0.82 0.15 92);
   --error-border: oklch(0.8 0.13 28 / 32%);
   --error-background: oklch(0.62 0.12 28 / 20%);
   --error-foreground: oklch(0.95 0.04 30);
   --neutral-border: var(--border);
   --neutral-background: oklch(1 0 0 / 5%);
   --neutral-foreground: var(--foreground);
+
+  /* Calibrated elevation. Soft, layered, low-opacity — never a hard drop. */
+  --elevation-1:
+    0 1px 2px oklch(0 0 0 / 18%),
+    0 2px 6px oklch(0 0 0 / 14%);
+  --elevation-2:
+    0 2px 4px oklch(0 0 0 / 16%),
+    0 8px 24px oklch(0 0 0 / 26%);
+  --elevation-float:
+    0 8px 16px oklch(0 0 0 / 24%),
+    0 24px 56px oklch(0 0 0 / 40%);
+  --accent-glow: 0 2px 14px oklch(0.82 0.03 78 / 22%);
+}
+
+/* ── Sand — light ────────────────────────────────────────────────────
+   Same architecture, inverted. Warm off-white paper (never pure #fff),
+   warm near-black ink (never pure #000). The accent stays Late-Light
+   Sand, but deepened so it clears WCAG AA on pale surfaces — a pale
+   sand button with dark text reads as one confident warm tone, not a
+   washed-out chip. Shadows tint toward the cool background hue. */
+:root[data-theme="light"],
+:root[data-palette="sand"][data-theme="light"] {
+  color-scheme: light;
+
+  --background: oklch(0.97 0.004 250);
+  --surface-1: oklch(0.99 0.003 250);
+  --surface-2: oklch(1 0 0);
+  --surface-3: oklch(0.965 0.004 250);
+  --surface-inset: oklch(0.95 0.005 250);
+
+  --foreground: oklch(0.27 0.015 260);
+
+  --card: var(--surface-2);
+  --card-foreground: var(--foreground);
+
+  --popover: var(--surface-2);
+  --popover-foreground: var(--foreground);
+
+  /* Deepened sand: same hue family, dark enough to carry dark text. */
+  --primary: oklch(0.72 0.06 72);
+  --primary-bright: oklch(0.76 0.065 74);
+  --primary-deep: oklch(0.67 0.06 68);
+  --primary-foreground: oklch(0.22 0.02 70);
+  /* Pale sand fill can't carry readable text; accent-text is a deepened
+     sand so links/accent labels clear AA on pale paper. */
+  --accent-text: oklch(0.52 0.08 64);
+  --accent-tint: oklch(0.72 0.06 72 / 16%);
+
+  --secondary: oklch(0.94 0.005 250);
+  --secondary-foreground: var(--foreground);
+
+  --muted: var(--surface-2);
+  --muted-foreground: oklch(0.5 0.012 260);
+
+  --accent: oklch(0.94 0.005 250);
+  --accent-foreground: var(--foreground);
+
+  --destructive: oklch(0.55 0.2 28);
+  --destructive-foreground: oklch(0.99 0 0);
+
+  --border: oklch(0.27 0.02 260 / 12%);
+  --border-strong: oklch(0.27 0.02 260 / 20%);
+  --hairline: oklch(0.27 0.02 260 / 8%);
+  --highlight: oklch(1 0 0 / 70%);
+  --input: oklch(1 0 0);
+  --ring: oklch(0.72 0.06 72 / 90%);
+  --list-active-bg: oklch(0.74 0.055 74 / 16%);
+  --list-active-border: oklch(0.7 0.06 72 / 40%);
+  --overlay: oklch(0.4 0.02 260 / 36%);
+  --float-fill: oklch(1 0 0 / 78%);
+  --float-highlight: oklch(1 0 0 / 90%);
+
+  --success-border: oklch(0.55 0.11 162 / 38%);
+  --success-background: oklch(0.72 0.1 162 / 22%);
+  --success-foreground: oklch(0.43 0.1 162);
+  --success-dot: oklch(0.58 0.13 162);
+  --warning-border: oklch(0.6 0.12 75 / 40%);
+  --warning-background: oklch(0.82 0.12 85 / 26%);
+  --warning-foreground: oklch(0.46 0.11 70);
+  --warning-dot: oklch(0.66 0.14 75);
+  --error-border: oklch(0.6 0.16 28 / 36%);
+  --error-background: oklch(0.78 0.12 28 / 22%);
+  --error-foreground: oklch(0.48 0.18 28);
+  --neutral-border: var(--border);
+  --neutral-background: oklch(0.27 0.02 260 / 4%);
+  --neutral-foreground: var(--foreground);
+
+  /* Shadows on light surfaces are tinted toward the cool bg hue and
+     kept soft — no pure-black drops. */
+  --elevation-1:
+    0 1px 2px oklch(0.4 0.03 260 / 8%),
+    0 2px 6px oklch(0.4 0.03 260 / 6%);
+  --elevation-2:
+    0 2px 4px oklch(0.4 0.03 260 / 8%),
+    0 10px 24px oklch(0.4 0.03 260 / 10%);
+  --elevation-float:
+    0 8px 16px oklch(0.4 0.03 260 / 12%),
+    0 24px 56px oklch(0.4 0.03 260 / 18%);
+  --accent-glow: 0 2px 14px oklch(0.72 0.06 72 / 26%);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   NORD — "north-bluish", arctic. Polar Night greys, Frost-blue accent.
+   Translated from the Nord palette (nordtheme.com) into OKLCH. The Frost
+   accent (#88c0d0) is the locked hue across both modes; status colors map
+   to Aurora (green nord14, yellow nord13, red nord11).
+   ════════════════════════════════════════════════════════════════════ */
+:root[data-palette="nord"],
+:root[data-palette="nord"][data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Polar Night ladder (nord0 #2e3440 → up). */
+  --background: oklch(0.29 0.02 264);
+  --surface-1: oklch(0.32 0.022 263);
+  --surface-2: oklch(0.36 0.024 262);
+  --surface-3: oklch(0.41 0.026 261);
+  --surface-inset: oklch(0.25 0.018 264);
+
+  /* Snow Storm ink (nord6 #eceff4). */
+  --foreground: oklch(0.95 0.008 250);
+
+  --card: var(--surface-2);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-2);
+  --popover-foreground: var(--foreground);
+
+  /* Frost accent (nord8 #88c0d0). */
+  --primary: oklch(0.79 0.06 215);
+  --primary-bright: oklch(0.84 0.07 213);
+  --primary-deep: oklch(0.72 0.07 222);
+  --primary-foreground: oklch(0.25 0.018 264);
+  --accent-text: oklch(0.79 0.06 215);
+  --accent-tint: oklch(0.79 0.06 215 / 14%);
+
+  --secondary: var(--surface-3);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--surface-2);
+  --muted-foreground: oklch(0.75 0.018 250);
+  --accent: var(--surface-3);
+  --accent-foreground: var(--foreground);
+
+  /* Aurora red (nord11 #bf616a), deepened for AA on the white label. */
+  --destructive: oklch(0.55 0.17 22);
+  --destructive-foreground: oklch(0.97 0.008 250);
+
+  --border: oklch(1 0 0 / 10%);
+  --border-strong: oklch(1 0 0 / 18%);
+  --hairline: oklch(1 0 0 / 8%);
+  --highlight: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 7%);
+  --ring: oklch(0.79 0.06 215 / 92%);
+  --list-active-bg: oklch(0.43 0.03 230);
+  --list-active-border: oklch(0.79 0.06 215 / 46%);
+  --overlay: oklch(0.22 0.018 264 / 64%);
+  --float-fill: oklch(0.36 0.024 262 / 82%);
+  --float-highlight: oklch(1 0 0 / 8%);
+
+  /* Status mapped to Aurora green/yellow/red. */
+  --success-border: oklch(0.78 0.1 145 / 34%);
+  --success-background: oklch(0.6 0.08 145 / 24%);
+  --success-foreground: oklch(0.88 0.08 145);
+  --success-dot: oklch(0.77 0.11 145);
+  --warning-border: oklch(0.83 0.1 88 / 34%);
+  --warning-background: oklch(0.7 0.09 88 / 22%);
+  --warning-foreground: oklch(0.9 0.06 90);
+  --warning-dot: oklch(0.82 0.11 88);
+  --error-border: oklch(0.62 0.13 17 / 36%);
+  --error-background: oklch(0.6 0.12 17 / 22%);
+  --error-foreground: oklch(0.84 0.08 18);
+  --neutral-border: var(--border);
+  --neutral-background: oklch(1 0 0 / 5%);
+  --neutral-foreground: var(--foreground);
+
+  --elevation-1:
+    0 1px 2px oklch(0.18 0.02 264 / 28%),
+    0 2px 6px oklch(0.18 0.02 264 / 22%);
+  --elevation-2:
+    0 2px 4px oklch(0.18 0.02 264 / 26%),
+    0 8px 24px oklch(0.16 0.02 264 / 38%);
+  --elevation-float:
+    0 8px 16px oklch(0.16 0.02 264 / 34%),
+    0 24px 56px oklch(0.14 0.02 264 / 50%);
+  --accent-glow: 0 2px 14px oklch(0.79 0.06 215 / 24%);
+}
+
+:root[data-palette="nord"][data-theme="light"] {
+  color-scheme: light;
+
+  /* Snow Storm paper (nord4 #d8dee9 → nord6 #eceff4 → up). */
+  --background: oklch(0.95 0.008 250);
+  --surface-1: oklch(0.97 0.006 250);
+  --surface-2: oklch(0.99 0.004 250);
+  --surface-3: oklch(0.935 0.01 252);
+  --surface-inset: oklch(0.92 0.012 254);
+
+  /* Polar Night ink (nord0 #2e3440). */
+  --foreground: oklch(0.32 0.022 263);
+
+  --card: var(--surface-2);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-2);
+  --popover-foreground: var(--foreground);
+
+  /* Frost deepened (nord10 #5e81ac family) for AA on pale paper. The
+     button gradient runs deep enough that the white label clears AA. */
+  --primary: oklch(0.55 0.095 240);
+  --primary-bright: oklch(0.55 0.1 240);
+  --primary-deep: oklch(0.46 0.095 244);
+  --primary-foreground: oklch(0.99 0.004 250);
+  --accent-text: oklch(0.5 0.1 242);
+  --accent-tint: oklch(0.55 0.095 240 / 14%);
+
+  --secondary: oklch(0.91 0.012 252);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--surface-2);
+  --muted-foreground: oklch(0.48 0.02 260);
+  --accent: oklch(0.91 0.012 252);
+  --accent-foreground: var(--foreground);
+
+  --destructive: oklch(0.52 0.16 18);
+  --destructive-foreground: oklch(0.99 0.004 250);
+
+  --border: oklch(0.32 0.025 263 / 14%);
+  --border-strong: oklch(0.32 0.025 263 / 22%);
+  --hairline: oklch(0.32 0.025 263 / 9%);
+  --highlight: oklch(1 0 0 / 75%);
+  --input: oklch(1 0 0);
+  --ring: oklch(0.58 0.09 240 / 90%);
+  --list-active-bg: oklch(0.6 0.08 235 / 16%);
+  --list-active-border: oklch(0.56 0.09 240 / 42%);
+  --overlay: oklch(0.4 0.02 260 / 36%);
+  --float-fill: oklch(1 0 0 / 80%);
+  --float-highlight: oklch(1 0 0 / 92%);
+
+  --success-border: oklch(0.52 0.1 150 / 40%);
+  --success-background: oklch(0.7 0.1 148 / 22%);
+  --success-foreground: oklch(0.42 0.1 150);
+  --success-dot: oklch(0.55 0.12 148);
+  --warning-border: oklch(0.6 0.11 80 / 42%);
+  --warning-background: oklch(0.82 0.11 86 / 26%);
+  --warning-foreground: oklch(0.46 0.1 72);
+  --warning-dot: oklch(0.66 0.13 80);
+  --error-border: oklch(0.56 0.16 20 / 38%);
+  --error-background: oklch(0.76 0.12 20 / 22%);
+  --error-foreground: oklch(0.48 0.17 20);
+  --neutral-border: var(--border);
+  --neutral-background: oklch(0.32 0.025 263 / 4%);
+  --neutral-foreground: var(--foreground);
+
+  --elevation-1:
+    0 1px 2px oklch(0.4 0.03 250 / 8%),
+    0 2px 6px oklch(0.4 0.03 250 / 6%);
+  --elevation-2:
+    0 2px 4px oklch(0.4 0.03 250 / 8%),
+    0 10px 24px oklch(0.4 0.03 250 / 10%);
+  --elevation-float:
+    0 8px 16px oklch(0.4 0.03 250 / 12%),
+    0 24px 56px oklch(0.4 0.03 250 / 18%);
+  --accent-glow: 0 2px 14px oklch(0.58 0.09 240 / 26%);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   DRACULA — high-contrast dark classic. Deep blue-grey base, vivid purple
+   accent. Translated from draculatheme.com. Purple (#bd93f9) is the locked
+   hue; status maps to the palette's green/yellow/red.
+   ════════════════════════════════════════════════════════════════════ */
+:root[data-palette="dracula"],
+:root[data-palette="dracula"][data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Base #282a36 → Current Line #44475a → up. */
+  --background: oklch(0.26 0.02 282);
+  --surface-1: oklch(0.3 0.022 282);
+  --surface-2: oklch(0.34 0.024 281);
+  --surface-3: oklch(0.4 0.028 280);
+  --surface-inset: oklch(0.22 0.018 283);
+
+  /* Foreground #f8f8f2. */
+  --foreground: oklch(0.97 0.005 106);
+
+  --card: var(--surface-2);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-2);
+  --popover-foreground: var(--foreground);
+
+  /* Purple accent (#bd93f9). */
+  --primary: oklch(0.74 0.15 300);
+  --primary-bright: oklch(0.79 0.16 301);
+  --primary-deep: oklch(0.67 0.16 300);
+  --primary-foreground: oklch(0.21 0.018 283);
+  --accent-text: oklch(0.74 0.15 300);
+  --accent-tint: oklch(0.74 0.15 300 / 16%);
+
+  --secondary: var(--surface-3);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--surface-2);
+  --muted-foreground: oklch(0.74 0.03 274);
+  --accent: var(--surface-3);
+  --accent-foreground: var(--foreground);
+
+  /* Red #ff5555, deepened for AA on the white label. */
+  --destructive: oklch(0.57 0.21 24);
+  --destructive-foreground: oklch(0.98 0.005 106);
+
+  --border: oklch(1 0 0 / 11%);
+  --border-strong: oklch(1 0 0 / 19%);
+  --hairline: oklch(1 0 0 / 8%);
+  --highlight: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 8%);
+  --ring: oklch(0.74 0.15 300 / 92%);
+  --list-active-bg: oklch(0.4 0.06 295);
+  --list-active-border: oklch(0.74 0.15 300 / 48%);
+  --overlay: oklch(0.18 0.018 283 / 66%);
+  --float-fill: oklch(0.34 0.024 281 / 82%);
+  --float-highlight: oklch(1 0 0 / 8%);
+
+  /* Green #50fa7b, Yellow #f1fa8c, Red #ff5555. */
+  --success-border: oklch(0.85 0.16 150 / 34%);
+  --success-background: oklch(0.66 0.12 150 / 24%);
+  --success-foreground: oklch(0.88 0.14 150);
+  --success-dot: oklch(0.83 0.18 150);
+  --warning-border: oklch(0.92 0.13 108 / 34%);
+  --warning-background: oklch(0.78 0.11 108 / 22%);
+  --warning-foreground: oklch(0.93 0.1 108);
+  --warning-dot: oklch(0.9 0.14 108);
+  --error-border: oklch(0.68 0.2 22 / 38%);
+  --error-background: oklch(0.62 0.18 22 / 22%);
+  --error-foreground: oklch(0.84 0.13 22);
+  --neutral-border: var(--border);
+  --neutral-background: oklch(1 0 0 / 5%);
+  --neutral-foreground: var(--foreground);
+
+  --elevation-1:
+    0 1px 2px oklch(0.12 0.02 283 / 32%),
+    0 2px 6px oklch(0.12 0.02 283 / 24%);
+  --elevation-2:
+    0 2px 4px oklch(0.12 0.02 283 / 28%),
+    0 8px 24px oklch(0.1 0.02 283 / 42%);
+  --elevation-float:
+    0 8px 16px oklch(0.1 0.02 283 / 38%),
+    0 24px 56px oklch(0.08 0.02 283 / 54%);
+  --accent-glow: 0 2px 16px oklch(0.74 0.15 300 / 28%);
+}
+
+:root[data-palette="dracula"][data-theme="light"] {
+  color-scheme: light;
+
+  /* Dracula has no canonical light variant; this is a faithful pale
+     inversion that keeps the purple identity and clears AA. */
+  --background: oklch(0.97 0.006 300);
+  --surface-1: oklch(0.985 0.004 300);
+  --surface-2: oklch(1 0 0);
+  --surface-3: oklch(0.96 0.008 300);
+  --surface-inset: oklch(0.94 0.01 300);
+
+  --foreground: oklch(0.3 0.03 285);
+
+  --card: var(--surface-2);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-2);
+  --popover-foreground: var(--foreground);
+
+  /* Purple deepened for AA on white, gradient deep enough for a white label. */
+  --primary: oklch(0.55 0.2 300);
+  --primary-bright: oklch(0.555 0.21 301);
+  --primary-deep: oklch(0.46 0.2 300);
+  --primary-foreground: oklch(0.99 0.004 300);
+  --accent-text: oklch(0.5 0.21 300);
+  --accent-tint: oklch(0.55 0.2 300 / 14%);
+
+  --secondary: oklch(0.94 0.012 300);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--surface-2);
+  --muted-foreground: oklch(0.5 0.03 290);
+  --accent: oklch(0.94 0.012 300);
+  --accent-foreground: var(--foreground);
+
+  --destructive: oklch(0.55 0.2 24);
+  --destructive-foreground: oklch(0.99 0.004 300);
+
+  --border: oklch(0.3 0.03 285 / 13%);
+  --border-strong: oklch(0.3 0.03 285 / 21%);
+  --hairline: oklch(0.3 0.03 285 / 8%);
+  --highlight: oklch(1 0 0 / 75%);
+  --input: oklch(1 0 0);
+  --ring: oklch(0.55 0.2 300 / 90%);
+  --list-active-bg: oklch(0.6 0.18 300 / 14%);
+  --list-active-border: oklch(0.54 0.2 300 / 42%);
+  --overlay: oklch(0.4 0.03 290 / 36%);
+  --float-fill: oklch(1 0 0 / 80%);
+  --float-highlight: oklch(1 0 0 / 92%);
+
+  --success-border: oklch(0.55 0.13 150 / 40%);
+  --success-background: oklch(0.72 0.13 150 / 22%);
+  --success-foreground: oklch(0.43 0.12 150);
+  --success-dot: oklch(0.56 0.15 150);
+  --warning-border: oklch(0.62 0.12 92 / 42%);
+  --warning-background: oklch(0.84 0.12 100 / 26%);
+  --warning-foreground: oklch(0.47 0.1 88);
+  --warning-dot: oklch(0.68 0.14 92);
+  --error-border: oklch(0.56 0.18 24 / 38%);
+  --error-background: oklch(0.76 0.13 24 / 22%);
+  --error-foreground: oklch(0.49 0.18 24);
+  --neutral-border: var(--border);
+  --neutral-background: oklch(0.3 0.03 285 / 4%);
+  --neutral-foreground: var(--foreground);
+
+  --elevation-1:
+    0 1px 2px oklch(0.4 0.04 290 / 8%),
+    0 2px 6px oklch(0.4 0.04 290 / 6%);
+  --elevation-2:
+    0 2px 4px oklch(0.4 0.04 290 / 8%),
+    0 10px 24px oklch(0.4 0.04 290 / 10%);
+  --elevation-float:
+    0 8px 16px oklch(0.4 0.04 290 / 12%),
+    0 24px 56px oklch(0.4 0.04 290 / 18%);
+  --accent-glow: 0 2px 16px oklch(0.55 0.2 300 / 26%);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   TOKYO NIGHT — "lights of downtown Tokyo at night". Deep indigo base,
+   soft blue accent. Translated from enkia/tokyo-night-vscode-theme.
+   Blue (#7aa2f7) is the locked hue.
+   ════════════════════════════════════════════════════════════════════ */
+:root[data-palette="tokyo-night"],
+:root[data-palette="tokyo-night"][data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Background #1a1b26 → Storm #24283b → up. */
+  --background: oklch(0.22 0.025 276);
+  --surface-1: oklch(0.26 0.028 274);
+  --surface-2: oklch(0.3 0.03 272);
+  --surface-3: oklch(0.36 0.032 270);
+  --surface-inset: oklch(0.18 0.022 278);
+
+  /* Foreground #a9b1d6 brightened toward #c0caf5 for body. */
+  --foreground: oklch(0.88 0.03 270);
+
+  --card: var(--surface-2);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-2);
+  --popover-foreground: var(--foreground);
+
+  /* Blue accent (#7aa2f7). */
+  --primary: oklch(0.7 0.13 264);
+  --primary-bright: oklch(0.75 0.14 263);
+  --primary-deep: oklch(0.64 0.14 266);
+  --primary-foreground: oklch(0.18 0.022 278);
+  --accent-text: oklch(0.7 0.13 264);
+  --accent-tint: oklch(0.7 0.13 264 / 16%);
+
+  --secondary: var(--surface-3);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--surface-2);
+  --muted-foreground: oklch(0.68 0.035 268);
+  --accent: var(--surface-3);
+  --accent-foreground: var(--foreground);
+
+  /* Red #f7768e, deepened for AA on the white label. */
+  --destructive: oklch(0.57 0.2 22);
+  --destructive-foreground: oklch(0.97 0.01 270);
+
+  --border: oklch(1 0 0 / 10%);
+  --border-strong: oklch(1 0 0 / 18%);
+  --hairline: oklch(1 0 0 / 7%);
+  --highlight: oklch(1 0 0 / 7%);
+  --input: oklch(1 0 0 / 7%);
+  --ring: oklch(0.7 0.13 264 / 92%);
+  --list-active-bg: oklch(0.36 0.06 266);
+  --list-active-border: oklch(0.7 0.13 264 / 46%);
+  --overlay: oklch(0.14 0.022 278 / 66%);
+  --float-fill: oklch(0.3 0.03 272 / 82%);
+  --float-highlight: oklch(1 0 0 / 7%);
+
+  /* Green #9ece6a, Yellow/orange #e0af68, Red #f7768e. */
+  --success-border: oklch(0.81 0.13 135 / 34%);
+  --success-background: oklch(0.63 0.1 135 / 24%);
+  --success-foreground: oklch(0.85 0.12 135);
+  --success-dot: oklch(0.79 0.15 135);
+  --warning-border: oklch(0.78 0.11 78 / 34%);
+  --warning-background: oklch(0.66 0.09 78 / 22%);
+  --warning-foreground: oklch(0.86 0.08 80);
+  --warning-dot: oklch(0.77 0.12 78);
+  --error-border: oklch(0.7 0.17 9 / 38%);
+  --error-background: oklch(0.64 0.15 9 / 22%);
+  --error-foreground: oklch(0.85 0.1 10);
+  --neutral-border: var(--border);
+  --neutral-background: oklch(1 0 0 / 5%);
+  --neutral-foreground: var(--foreground);
+
+  --elevation-1:
+    0 1px 2px oklch(0.1 0.02 278 / 34%),
+    0 2px 6px oklch(0.1 0.02 278 / 26%);
+  --elevation-2:
+    0 2px 4px oklch(0.1 0.02 278 / 30%),
+    0 8px 24px oklch(0.08 0.02 278 / 44%);
+  --elevation-float:
+    0 8px 16px oklch(0.08 0.02 278 / 40%),
+    0 24px 56px oklch(0.06 0.02 278 / 56%);
+  --accent-glow: 0 2px 16px oklch(0.7 0.13 264 / 26%);
+}
+
+:root[data-palette="tokyo-night"][data-theme="light"] {
+  color-scheme: light;
+
+  /* Tokyo Night Day — the palette's own light variant: cool paper,
+     indigo ink, deepened blue accent. */
+  --background: oklch(0.95 0.01 258);
+  --surface-1: oklch(0.97 0.008 258);
+  --surface-2: oklch(0.99 0.005 258);
+  --surface-3: oklch(0.93 0.014 260);
+  --surface-inset: oklch(0.91 0.016 262);
+
+  --foreground: oklch(0.34 0.04 270);
+
+  --card: var(--surface-2);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-2);
+  --popover-foreground: var(--foreground);
+
+  /* Blue deepened (#3760bf family) for AA, gradient carries a white label. */
+  --primary: oklch(0.54 0.15 262);
+  --primary-bright: oklch(0.55 0.16 262);
+  --primary-deep: oklch(0.45 0.15 264);
+  --primary-foreground: oklch(0.99 0.005 258);
+  --accent-text: oklch(0.5 0.16 263);
+  --accent-tint: oklch(0.54 0.15 262 / 14%);
+
+  --secondary: oklch(0.92 0.014 260);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--surface-2);
+  --muted-foreground: oklch(0.5 0.04 268);
+  --accent: oklch(0.92 0.014 260);
+  --accent-foreground: var(--foreground);
+
+  --destructive: oklch(0.55 0.18 12);
+  --destructive-foreground: oklch(0.99 0.005 258);
+
+  --border: oklch(0.34 0.04 270 / 13%);
+  --border-strong: oklch(0.34 0.04 270 / 21%);
+  --hairline: oklch(0.34 0.04 270 / 8%);
+  --highlight: oklch(1 0 0 / 75%);
+  --input: oklch(1 0 0);
+  --ring: oklch(0.54 0.15 262 / 90%);
+  --list-active-bg: oklch(0.6 0.13 262 / 14%);
+  --list-active-border: oklch(0.52 0.15 262 / 42%);
+  --overlay: oklch(0.4 0.03 268 / 36%);
+  --float-fill: oklch(1 0 0 / 80%);
+  --float-highlight: oklch(1 0 0 / 92%);
+
+  --success-border: oklch(0.54 0.12 142 / 40%);
+  --success-background: oklch(0.72 0.12 138 / 22%);
+  --success-foreground: oklch(0.43 0.11 142);
+  --success-dot: oklch(0.56 0.14 140);
+  --warning-border: oklch(0.62 0.11 74 / 42%);
+  --warning-background: oklch(0.83 0.11 82 / 26%);
+  --warning-foreground: oklch(0.47 0.1 70);
+  --warning-dot: oklch(0.67 0.13 74);
+  --error-border: oklch(0.57 0.17 12 / 38%);
+  --error-background: oklch(0.77 0.13 12 / 22%);
+  --error-foreground: oklch(0.5 0.18 12);
+  --neutral-border: var(--border);
+  --neutral-background: oklch(0.34 0.04 270 / 4%);
+  --neutral-foreground: var(--foreground);
+
+  --elevation-1:
+    0 1px 2px oklch(0.4 0.04 268 / 8%),
+    0 2px 6px oklch(0.4 0.04 268 / 6%);
+  --elevation-2:
+    0 2px 4px oklch(0.4 0.04 268 / 8%),
+    0 10px 24px oklch(0.4 0.04 268 / 10%);
+  --elevation-float:
+    0 8px 16px oklch(0.4 0.04 268 / 12%),
+    0 24px 56px oklch(0.4 0.04 268 / 18%);
+  --accent-glow: 0 2px 14px oklch(0.54 0.15 262 / 26%);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   GRUVBOX — retro-warm, high readability. Warm dark base, orange accent.
+   Translated from morhetz/gruvbox. Orange (#fe8019) is the locked hue;
+   status maps to the palette's green/yellow/red.
+   ════════════════════════════════════════════════════════════════════ */
+:root[data-palette="gruvbox"],
+:root[data-palette="gruvbox"][data-theme="dark"] {
+  color-scheme: dark;
+
+  /* bg0 #282828 → bg1 #3c3836 → up, warm. */
+  --background: oklch(0.27 0.012 75);
+  --surface-1: oklch(0.31 0.014 73);
+  --surface-2: oklch(0.35 0.016 71);
+  --surface-3: oklch(0.41 0.018 69);
+  --surface-inset: oklch(0.23 0.01 76);
+
+  /* fg #ebdbb2, warm cream. */
+  --foreground: oklch(0.89 0.03 92);
+
+  --card: var(--surface-2);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-2);
+  --popover-foreground: var(--foreground);
+
+  /* Orange accent (#fe8019). */
+  --primary: oklch(0.72 0.16 52);
+  --primary-bright: oklch(0.77 0.17 54);
+  --primary-deep: oklch(0.66 0.16 48);
+  --primary-foreground: oklch(0.2 0.01 76);
+  --accent-text: oklch(0.72 0.16 52);
+  --accent-tint: oklch(0.72 0.16 52 / 16%);
+
+  --secondary: var(--surface-3);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--surface-2);
+  --muted-foreground: oklch(0.74 0.025 90);
+  --accent: var(--surface-3);
+  --accent-foreground: var(--foreground);
+
+  /* Red #fb4934, deepened for AA on the white label. */
+  --destructive: oklch(0.55 0.21 28);
+  --destructive-foreground: oklch(0.97 0.02 92);
+
+  --border: oklch(1 0 0 / 10%);
+  --border-strong: oklch(1 0 0 / 18%);
+  --hairline: oklch(1 0 0 / 8%);
+  --highlight: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 7%);
+  --ring: oklch(0.72 0.16 52 / 92%);
+  --list-active-bg: oklch(0.4 0.05 56);
+  --list-active-border: oklch(0.72 0.16 52 / 46%);
+  --overlay: oklch(0.18 0.01 76 / 66%);
+  --float-fill: oklch(0.35 0.016 71 / 84%);
+  --float-highlight: oklch(1 0 0 / 8%);
+
+  /* Green #b8bb26, Yellow #fabd2f, Red #fb4934. */
+  --success-border: oklch(0.78 0.14 118 / 34%);
+  --success-background: oklch(0.62 0.11 118 / 24%);
+  --success-foreground: oklch(0.83 0.13 118);
+  --success-dot: oklch(0.77 0.15 118);
+  --warning-border: oklch(0.82 0.14 86 / 34%);
+  --warning-background: oklch(0.7 0.12 86 / 22%);
+  --warning-foreground: oklch(0.88 0.1 88);
+  --warning-dot: oklch(0.81 0.15 86);
+  --error-border: oklch(0.64 0.2 28 / 38%);
+  --error-background: oklch(0.6 0.18 28 / 22%);
+  --error-foreground: oklch(0.82 0.12 28);
+  --neutral-border: var(--border);
+  --neutral-background: oklch(1 0 0 / 5%);
+  --neutral-foreground: var(--foreground);
+
+  --elevation-1:
+    0 1px 2px oklch(0.14 0.01 76 / 32%),
+    0 2px 6px oklch(0.14 0.01 76 / 24%);
+  --elevation-2:
+    0 2px 4px oklch(0.14 0.01 76 / 28%),
+    0 8px 24px oklch(0.12 0.01 76 / 42%);
+  --elevation-float:
+    0 8px 16px oklch(0.12 0.01 76 / 38%),
+    0 24px 56px oklch(0.1 0.01 76 / 52%);
+  --accent-glow: 0 2px 16px oklch(0.72 0.16 52 / 28%);
+}
+
+:root[data-palette="gruvbox"][data-theme="light"] {
+  color-scheme: light;
+
+  /* Gruvbox light: bg0 #fbf1c7 warm paper, fg #3c3836 warm ink. */
+  --background: oklch(0.95 0.03 92);
+  --surface-1: oklch(0.97 0.024 92);
+  --surface-2: oklch(0.985 0.018 92);
+  --surface-3: oklch(0.93 0.034 92);
+  --surface-inset: oklch(0.91 0.038 92);
+
+  --foreground: oklch(0.33 0.018 66);
+
+  --card: var(--surface-2);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-2);
+  --popover-foreground: var(--foreground);
+
+  /* Orange deepened (#af3a03 / #d65d0e family) for AA, white-label gradient. */
+  --primary: oklch(0.57 0.18 44);
+  --primary-bright: oklch(0.57 0.185 46);
+  --primary-deep: oklch(0.48 0.17 42);
+  --primary-foreground: oklch(0.99 0.012 92);
+  --accent-text: oklch(0.52 0.18 44);
+  --accent-tint: oklch(0.57 0.18 44 / 15%);
+
+  --secondary: oklch(0.92 0.034 92);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--surface-2);
+  --muted-foreground: oklch(0.48 0.02 64);
+  --accent: oklch(0.92 0.034 92);
+  --accent-foreground: var(--foreground);
+
+  --destructive: oklch(0.52 0.19 28);
+  --destructive-foreground: oklch(0.99 0.018 92);
+
+  --border: oklch(0.33 0.02 66 / 14%);
+  --border-strong: oklch(0.33 0.02 66 / 22%);
+  --hairline: oklch(0.33 0.02 66 / 9%);
+  --highlight: oklch(1 0 0 / 60%);
+  --input: oklch(1 0 0 / 70%);
+  --ring: oklch(0.58 0.17 44 / 90%);
+  --list-active-bg: oklch(0.62 0.15 48 / 16%);
+  --list-active-border: oklch(0.56 0.17 44 / 42%);
+  --overlay: oklch(0.4 0.03 64 / 36%);
+  --float-fill: oklch(0.985 0.018 92 / 82%);
+  --float-highlight: oklch(1 0 0 / 80%);
+
+  --success-border: oklch(0.52 0.12 124 / 40%);
+  --success-background: oklch(0.7 0.12 120 / 22%);
+  --success-foreground: oklch(0.42 0.11 124);
+  --success-dot: oklch(0.54 0.14 122);
+  --warning-border: oklch(0.6 0.12 80 / 42%);
+  --warning-background: oklch(0.82 0.12 84 / 26%);
+  --warning-foreground: oklch(0.46 0.1 74);
+  --warning-dot: oklch(0.66 0.14 80);
+  --error-border: oklch(0.54 0.18 28 / 38%);
+  --error-background: oklch(0.76 0.13 28 / 22%);
+  --error-foreground: oklch(0.48 0.18 28);
+  --neutral-border: var(--border);
+  --neutral-background: oklch(0.33 0.02 66 / 4%);
+  --neutral-foreground: var(--foreground);
+
+  --elevation-1:
+    0 1px 2px oklch(0.45 0.04 70 / 9%),
+    0 2px 6px oklch(0.45 0.04 70 / 7%);
+  --elevation-2:
+    0 2px 4px oklch(0.45 0.04 70 / 9%),
+    0 10px 24px oklch(0.45 0.04 70 / 11%);
+  --elevation-float:
+    0 8px 16px oklch(0.45 0.04 70 / 13%),
+    0 24px 56px oklch(0.45 0.04 70 / 19%);
+  --accent-glow: 0 2px 16px oklch(0.58 0.17 44 / 26%);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   SOLARIZED — precision palette for reduced eye strain (Ethan Schoonover).
+   Teal-grey base, blue accent. Base03 #002b36 dark / Base3 #fdf6e3 light.
+   Blue (#268bd2) is the locked hue; status maps to green/yellow/red.
+   ════════════════════════════════════════════════════════════════════ */
+:root[data-palette="solarized"],
+:root[data-palette="solarized"][data-theme="dark"] {
+  color-scheme: dark;
+
+  /* base03 #002b36 → base02 #073642 → up, teal-grey. */
+  --background: oklch(0.25 0.03 200);
+  --surface-1: oklch(0.29 0.032 199);
+  --surface-2: oklch(0.33 0.032 198);
+  --surface-3: oklch(0.39 0.03 197);
+  --surface-inset: oklch(0.21 0.028 201);
+
+  /* base0 #839496 → base1 #93a1a1 body ink. */
+  --foreground: oklch(0.84 0.015 180);
+
+  --card: var(--surface-2);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-2);
+  --popover-foreground: var(--foreground);
+
+  /* Blue accent (#268bd2). Button gradient deepened so the near-white
+     label clears AA; accent-text is brightened for legible links on dark. */
+  --primary: oklch(0.62 0.13 245);
+  --primary-bright: oklch(0.58 0.15 246);
+  --primary-deep: oklch(0.5 0.14 248);
+  --primary-foreground: oklch(0.99 0.006 210);
+  --accent-text: oklch(0.72 0.12 244);
+  --accent-tint: oklch(0.62 0.13 245 / 16%);
+
+  --secondary: var(--surface-3);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--surface-2);
+  --muted-foreground: oklch(0.68 0.02 188);
+  --accent: var(--surface-3);
+  --accent-foreground: var(--foreground);
+
+  /* Red #dc322f, deepened for AA on the white label. */
+  --destructive: oklch(0.54 0.2 28);
+  --destructive-foreground: oklch(0.97 0.01 180);
+
+  --border: oklch(1 0 0 / 9%);
+  --border-strong: oklch(1 0 0 / 16%);
+  --hairline: oklch(1 0 0 / 7%);
+  --highlight: oklch(1 0 0 / 7%);
+  --input: oklch(1 0 0 / 6%);
+  --ring: oklch(0.62 0.13 245 / 92%);
+  --list-active-bg: oklch(0.37 0.06 235);
+  --list-active-border: oklch(0.62 0.13 245 / 46%);
+  --overlay: oklch(0.16 0.026 201 / 66%);
+  --float-fill: oklch(0.33 0.032 198 / 84%);
+  --float-highlight: oklch(1 0 0 / 7%);
+
+  /* Green #859900, Yellow #b58900, Red #dc322f. */
+  --success-border: oklch(0.72 0.13 128 / 34%);
+  --success-background: oklch(0.58 0.1 128 / 24%);
+  --success-foreground: oklch(0.8 0.12 128);
+  --success-dot: oklch(0.71 0.14 128);
+  --warning-border: oklch(0.72 0.12 86 / 34%);
+  --warning-background: oklch(0.6 0.1 86 / 22%);
+  --warning-foreground: oklch(0.82 0.1 88);
+  --warning-dot: oklch(0.71 0.13 86);
+  --error-border: oklch(0.6 0.19 28 / 38%);
+  --error-background: oklch(0.56 0.16 28 / 22%);
+  --error-foreground: oklch(0.8 0.12 28);
+  --neutral-border: var(--border);
+  --neutral-background: oklch(1 0 0 / 5%);
+  --neutral-foreground: var(--foreground);
+
+  --elevation-1:
+    0 1px 2px oklch(0.12 0.025 201 / 34%),
+    0 2px 6px oklch(0.12 0.025 201 / 26%);
+  --elevation-2:
+    0 2px 4px oklch(0.12 0.025 201 / 30%),
+    0 8px 24px oklch(0.1 0.025 201 / 44%);
+  --elevation-float:
+    0 8px 16px oklch(0.1 0.025 201 / 40%),
+    0 24px 56px oklch(0.08 0.025 201 / 56%);
+  --accent-glow: 0 2px 16px oklch(0.62 0.13 245 / 26%);
+}
+
+:root[data-palette="solarized"][data-theme="light"] {
+  color-scheme: light;
+
+  /* Solarized Light: base3 #fdf6e3 warm paper, base00/01 ink. */
+  --background: oklch(0.96 0.022 92);
+  --surface-1: oklch(0.98 0.016 92);
+  --surface-2: oklch(0.99 0.012 92);
+  --surface-3: oklch(0.94 0.026 95);
+  --surface-inset: oklch(0.92 0.03 96);
+
+  /* base01 #586e75 teal-grey ink. */
+  --foreground: oklch(0.42 0.02 200);
+
+  --card: var(--surface-2);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-2);
+  --popover-foreground: var(--foreground);
+
+  /* Blue accent (#268bd2). Gradient deepened so the white label clears AA. */
+  --primary: oklch(0.55 0.145 246);
+  --primary-bright: oklch(0.55 0.15 246);
+  --primary-deep: oklch(0.46 0.14 248);
+  --primary-foreground: oklch(0.99 0.008 92);
+  --accent-text: oklch(0.5 0.15 247);
+  --accent-tint: oklch(0.55 0.145 246 / 14%);
+
+  --secondary: oklch(0.93 0.026 95);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--surface-2);
+  --muted-foreground: oklch(0.52 0.02 195);
+  --accent: oklch(0.93 0.026 95);
+  --accent-foreground: var(--foreground);
+
+  --destructive: oklch(0.53 0.19 28);
+  --destructive-foreground: oklch(0.99 0.012 92);
+
+  --border: oklch(0.42 0.025 200 / 14%);
+  --border-strong: oklch(0.42 0.025 200 / 22%);
+  --hairline: oklch(0.42 0.025 200 / 9%);
+  --highlight: oklch(1 0 0 / 65%);
+  --input: oklch(1 0 0 / 75%);
+  --ring: oklch(0.56 0.14 246 / 90%);
+  --list-active-bg: oklch(0.6 0.12 244 / 15%);
+  --list-active-border: oklch(0.54 0.14 246 / 42%);
+  --overlay: oklch(0.4 0.03 195 / 36%);
+  --float-fill: oklch(0.99 0.012 92 / 82%);
+  --float-highlight: oklch(1 0 0 / 82%);
+
+  --success-border: oklch(0.55 0.12 126 / 40%);
+  --success-background: oklch(0.7 0.12 126 / 22%);
+  --success-foreground: oklch(0.44 0.11 126);
+  --success-dot: oklch(0.56 0.13 126);
+  --warning-border: oklch(0.6 0.11 84 / 42%);
+  --warning-background: oklch(0.8 0.11 86 / 26%);
+  --warning-foreground: oklch(0.47 0.1 82);
+  --warning-dot: oklch(0.64 0.13 84);
+  --error-border: oklch(0.55 0.18 28 / 38%);
+  --error-background: oklch(0.76 0.13 28 / 22%);
+  --error-foreground: oklch(0.49 0.18 28);
+  --neutral-border: var(--border);
+  --neutral-background: oklch(0.42 0.025 200 / 4%);
+  --neutral-foreground: var(--foreground);
+
+  --elevation-1:
+    0 1px 2px oklch(0.45 0.04 195 / 9%),
+    0 2px 6px oklch(0.45 0.04 195 / 7%);
+  --elevation-2:
+    0 2px 4px oklch(0.45 0.04 195 / 9%),
+    0 10px 24px oklch(0.45 0.04 195 / 11%);
+  --elevation-float:
+    0 8px 16px oklch(0.45 0.04 195 / 13%),
+    0 24px 56px oklch(0.45 0.04 195 / 19%);
+  --accent-glow: 0 2px 14px oklch(0.56 0.14 246 / 26%);
 }
 
 @layer base {
@@ -101,11 +1081,13 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
-    font-size: 14px;
+    font-size: var(--text-md);
     line-height: 1.5;
     font-kerning: normal;
-    color-scheme: dark;
-    min-height: 100vh;
+    min-height: 100dvh;
+    transition:
+      background-color 200ms var(--ease-out),
+      color 200ms var(--ease-out);
   }
 }
 
@@ -121,21 +1103,29 @@
 /* App shell: cool tonal gradient floor that the surfaces sit on. */
 .app-shell {
   background:
-    radial-gradient(120% 80% at 50% 0%, oklch(0.20 0.018 258) 0%, transparent 60%),
+    radial-gradient(130% 90% at 50% -10%, var(--surface-3) 0%, transparent 58%),
     var(--background);
 }
 
-/* Surface tiers. Flat by default; tonal layering replaces shadow. */
+/* Surface tiers. Tonal layering plus a soft elevation and a hairline
+   top highlight give modern depth without a heavy drop shadow. */
 .surface {
-  background: var(--surface-2);
+  position: relative;
+  background:
+    linear-gradient(180deg, var(--highlight) 0%, transparent 18%),
+    var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--elevation-2);
 }
 
 .surface-strong {
-  background: var(--surface-3);
+  background:
+    linear-gradient(180deg, var(--highlight) 0%, transparent 22%),
+    var(--surface-3);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-1);
 }
 
 .surface-muted {
@@ -146,40 +1136,97 @@
 
 .surface-inset {
   background: var(--surface-inset);
-  border: 1px solid oklch(1 0 0 / 6%);
+  border: 1px solid var(--hairline);
   border-radius: var(--radius-md);
+  box-shadow: inset 0 1px 2px oklch(0 0 0 / 22%);
 }
 
-/* List rows. Hover lifts one tonal step; active row earns the warm accent. */
+/* Floating overlays (palette, tray popover) lean on translucency +
+   blur — they sit over whatever app the user is in. */
+.surface-float {
+  position: relative;
+  background:
+    linear-gradient(180deg, var(--float-highlight) 0%, transparent 16%),
+    var(--float-fill);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--elevation-float);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  backdrop-filter: blur(28px) saturate(150%);
+}
+
+/* Solid fallback when the OS asks for less transparency. */
+@media (prefers-reduced-transparency: reduce) {
+  .surface-float {
+    background: var(--surface-2);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Modal scrim. The dim layer behind a dialog; tracks the theme overlay token
+   so no component reaches for the raw var() through an inline style. */
+.scrim {
+  background: var(--overlay);
+}
+
+/* List rows. Hover lifts one tonal step; the active row earns the warm
+   accent plus an animated indicator bar on its leading edge. */
 .list-item {
+  position: relative;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   transition:
-    background-color 140ms cubic-bezier(0.25, 0.1, 0.25, 1),
-    border-color 140ms cubic-bezier(0.25, 0.1, 0.25, 1),
-    color 140ms cubic-bezier(0.25, 0.1, 0.25, 1);
+    background-color 150ms var(--ease-out),
+    border-color 150ms var(--ease-out),
+    color 150ms var(--ease-out),
+    transform 150ms var(--ease-out);
+}
+
+.list-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, var(--primary-bright), var(--primary-deep));
+  transform: translateY(-50%);
+  opacity: 0;
+  transition:
+    height 200ms var(--ease-spring),
+    opacity 150ms var(--ease-out);
 }
 
 .list-item:hover {
-  background: var(--surface-2);
-  border-color: var(--border);
+  background: var(--surface-1);
+  border-color: var(--hairline);
 }
 
 .list-item-active {
   background: var(--list-active-bg);
   border-color: var(--list-active-border);
+  box-shadow:
+    var(--elevation-1),
+    inset 0 1px 0 var(--highlight);
+}
+
+.list-item-active::before {
+  height: 56%;
+  opacity: 1;
 }
 
 .section-label {
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted-foreground);
 }
 
 .field-note {
-  font-size: 12px;
+  font-size: var(--text-sm);
   line-height: 1.5;
   color: var(--muted-foreground);
 }
@@ -194,7 +1241,7 @@
   background: var(--neutral-background);
   color: var(--neutral-foreground);
   border-radius: 999px;
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 500;
   line-height: 1.4;
 }
@@ -217,11 +1264,48 @@
   color: var(--error-foreground);
 }
 
-/* Inline notices. Title + detail + recovery in one block, no shadow. */
+/* A quiet dot variant for ambient status, no full pill chrome. */
+.status-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+
+.status-dot::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--muted-foreground);
+}
+
+.status-dot--success {
+  color: var(--success-foreground);
+}
+
+.status-dot--success::before {
+  background: var(--success-dot);
+  box-shadow: 0 0 8px color-mix(in oklch, var(--success-dot) 60%, transparent);
+}
+
+.status-dot--warning {
+  color: var(--warning-foreground);
+}
+
+.status-dot--warning::before {
+  background: var(--warning-dot);
+  box-shadow: 0 0 8px color-mix(in oklch, var(--warning-dot) 55%, transparent);
+}
+
+/* Inline notices. Title + detail + recovery in one block. */
 .notice {
   border-radius: 12px;
   border: 1px solid var(--neutral-border);
   background: var(--neutral-background);
+  box-shadow: var(--elevation-2);
 }
 
 .notice--warning {
@@ -244,22 +1328,33 @@
   min-width: 18px;
   padding: 1px 6px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   font-weight: 500;
   line-height: 1.4;
   letter-spacing: 0.02em;
-  color: oklch(0.86 0.012 85);
-  background: var(--surface-3);
+  /* Follow the palette's muted ink so the chip re-tints with the theme
+     instead of staying a fixed warm grey. */
+  color: var(--muted-foreground);
+  background: linear-gradient(180deg, var(--surface-3), var(--surface-2));
   border: 1px solid var(--border);
   border-radius: 6px;
+  box-shadow:
+    var(--elevation-1),
+    inset 0 1px 0 var(--highlight);
 }
 
 .pressable {
   transition:
-    background-color 140ms cubic-bezier(0.25, 0.1, 0.25, 1),
-    border-color 140ms cubic-bezier(0.25, 0.1, 0.25, 1),
-    color 140ms cubic-bezier(0.25, 0.1, 0.25, 1),
-    opacity 140ms cubic-bezier(0.25, 0.1, 0.25, 1);
+    background-color 140ms var(--ease-out),
+    border-color 140ms var(--ease-out),
+    color 140ms var(--ease-out),
+    box-shadow 140ms var(--ease-out),
+    transform 120ms var(--ease-out),
+    opacity 140ms var(--ease-out);
+}
+
+.pressable:active {
+  transform: scale(0.97);
 }
 
 .snippet-text-wrap {

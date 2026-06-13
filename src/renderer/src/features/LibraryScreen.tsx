@@ -6,8 +6,6 @@ import {
   Info,
   Plus,
   Settings,
-  Shield,
-  ShieldCheck,
   X,
 } from "lucide-react";
 import {
@@ -21,7 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { fadeIn } from "@/lib/motion";
+import { surfaceIn } from "@/lib/motion";
 import {
   getSnippetPreviewParts,
   getSnippetPreviewText,
@@ -328,13 +326,13 @@ export function LibraryScreen(props: ScreenProps) {
 
   return (
     <motion.section
-      variants={fadeIn}
+      variants={surfaceIn}
       initial="hidden"
       animate="visible"
       className="surface flex h-full flex-col overflow-hidden lg:flex-row"
     >
       <aside className="flex w-full shrink-0 flex-col border-b border-border lg:w-[19.5rem] lg:border-b-0 lg:border-r">
-        <div className="flex items-center gap-2 border-b border-border px-4 py-4">
+        <div className="flex items-center gap-2 border-b border-border px-3 py-3">
           <SearchBar
             autoFocus
             label="Search snippets"
@@ -343,7 +341,7 @@ export function LibraryScreen(props: ScreenProps) {
           />
           <span
             aria-label={`${props.filtered.length} snippets`}
-            className="font-mono text-[11px] tabular-nums text-muted-foreground"
+            className="font-mono text-xs tabular-nums text-muted-foreground"
           >
             {props.filtered.length}
           </span>
@@ -360,10 +358,10 @@ export function LibraryScreen(props: ScreenProps) {
         <ScrollArea className="flex-1 min-h-0">
           {props.filtered.length === 0 ? (
             <div className="flex flex-col gap-1 px-5 py-10">
-              <p className="text-[14px] font-semibold text-foreground">
+              <p className="text-md font-semibold text-foreground">
                 No snippets yet
               </p>
-              <p className="max-w-[28ch] text-[12.5px] leading-relaxed text-muted-foreground">
+              <p className="max-w-[28ch] text-sm leading-relaxed text-muted-foreground">
                 Save a command, reply, or template once. Paste it anywhere with
                 your shortcut.
               </p>
@@ -385,18 +383,18 @@ export function LibraryScreen(props: ScreenProps) {
                     }
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <p className="snippet-preview-title min-w-0 flex-1 text-[13.5px] font-medium text-foreground">
+                      <p className="snippet-preview-title min-w-0 flex-1 text-base font-medium text-foreground">
                         {getSnippetPreviewText(snippet.title)}
                       </p>
                       {snippet.useCount > 0 ? (
-                        <span className="shrink-0 font-mono text-[10.5px] tabular-nums text-muted-foreground">
+                        <span className="shrink-0 font-mono text-2xs tabular-nums text-muted-foreground">
                           {snippet.useCount}×
                         </span>
                       ) : null}
                     </div>
                     <SnippetPreviewLine
                       parts={getSnippetPreviewParts(snippet.value)}
-                      className="snippet-preview-value mt-0.5 block font-mono text-[11.5px] text-muted-foreground"
+                      className="snippet-preview-value mt-0.5 block font-mono text-xs text-muted-foreground"
                     />
                   </button>
                 </li>
@@ -415,7 +413,7 @@ export function LibraryScreen(props: ScreenProps) {
             >
               Prev
             </Button>
-            <span className="font-mono text-[12px] tabular-nums text-muted-foreground">
+            <span className="font-mono text-sm tabular-nums text-muted-foreground">
               {pagination.page + 1} / {pagination.totalPages}
             </span>
             <Button
@@ -429,22 +427,19 @@ export function LibraryScreen(props: ScreenProps) {
           </div>
         ) : null}
 
-        <div className="flex items-center gap-1 border-t border-border p-2">
+        <div className="flex items-center gap-1 border-t border-border px-3 py-2">
           {props.permissionGranted ? (
-            <span className="status-pill status-pill--success flex-1 justify-center">
-              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+            <span className="status-dot status-dot--success flex-1 pl-1">
               Accessibility ready
             </span>
           ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-1 gap-2 px-3 status-pill status-pill--warning"
+            <button
+              type="button"
+              className="status-dot status-dot--warning flex-1 cursor-pointer pl-1 text-left hover:opacity-80"
               onClick={() => void props.onAccessibilityOpen()}
             >
-              <Shield className="h-4 w-4" aria-hidden="true" />
               Accessibility required
-            </Button>
+            </button>
           )}
           <Button
             ref={settingsTriggerRef}
@@ -494,10 +489,10 @@ export function LibraryScreen(props: ScreenProps) {
                       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                         <div className="min-w-0 space-y-2">
                           <p className="section-label">Snippet</p>
-                          <h2 className="snippet-text-wrap text-[22px] font-semibold leading-tight tracking-[-0.015em] text-foreground">
+                          <h2 className="snippet-text-wrap text-2xl font-semibold leading-tight tracking-[-0.015em] text-foreground">
                             {selected.title}
                           </h2>
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-muted-foreground">
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                             <span className="inline-flex items-center gap-1.5">
                               <Calendar
                                 className="h-3.5 w-3.5"
@@ -526,7 +521,7 @@ export function LibraryScreen(props: ScreenProps) {
                                   <Badge
                                     key={param}
                                     variant="outline"
-                                    className="font-mono text-[10.5px]"
+                                    className="font-mono text-2xs"
                                   >
                                     {`{${param}}`}
                                   </Badge>
@@ -543,17 +538,17 @@ export function LibraryScreen(props: ScreenProps) {
                           Paste snippet
                         </Button>
                       </div>
-                      <pre className="surface-inset snippet-text-wrap whitespace-pre-wrap p-4 font-mono text-[13px] leading-relaxed text-foreground">
+                      <pre className="surface-inset snippet-text-wrap whitespace-pre-wrap p-4 font-mono text-base leading-relaxed text-foreground">
                         {selected.value}
                       </pre>
                     </>
                   ) : (
                     <div className="space-y-1.5">
                       <p className="section-label">Detail</p>
-                      <h2 className="text-[18px] font-semibold tracking-[-0.005em] text-foreground">
+                      <h2 className="text-xl font-semibold tracking-[-0.005em] text-foreground">
                         Pick a snippet, or write a new one
                       </h2>
-                      <p className="max-w-[58ch] text-[13.5px] leading-relaxed text-muted-foreground">
+                      <p className="max-w-[58ch] text-base leading-relaxed text-muted-foreground">
                         Selecting a snippet on the left shows it here for
                         review. The form below is always live for the current
                         draft.
@@ -567,7 +562,7 @@ export function LibraryScreen(props: ScreenProps) {
                     <p className="section-label">
                       {props.editingId ? "Editing" : "New snippet"}
                     </p>
-                    <h2 className="text-[15px] font-semibold text-foreground">
+                    <h2 className="text-lg font-semibold text-foreground">
                       {props.editingId
                         ? "Edit the selected snippet"
                         : "Save it once, paste it forever"}
@@ -602,8 +597,7 @@ export function LibraryScreen(props: ScreenProps) {
 
       {showSettings && props.settings ? (
         <div
-          className="absolute inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "var(--overlay)" }}
+          className="scrim absolute inset-0 z-50 flex items-center justify-center p-4"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) {
               closeSettings();
@@ -622,13 +616,13 @@ export function LibraryScreen(props: ScreenProps) {
               <div className="space-y-1">
                 <h2
                   id={settingsTitleId}
-                  className="text-[17px] font-semibold text-foreground"
+                  className="text-xl font-semibold text-foreground"
                 >
                   Settings
                 </h2>
                 <p
                   id={settingsDescriptionId}
-                  className="max-w-[44ch] text-[13px] leading-relaxed text-muted-foreground"
+                  className="max-w-[44ch] text-base leading-relaxed text-muted-foreground"
                 >
                   Shortcut, launch behavior, and the local snippet file. No
                   sync, no account.

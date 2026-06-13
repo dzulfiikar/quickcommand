@@ -5,7 +5,7 @@ import type * as React from "react";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border border-transparent px-2 py-0.5 text-[11px] font-medium leading-none whitespace-nowrap transition-[background-color,border-color,color] focus-visible:ring-[3px] focus-visible:ring-ring/56 aria-invalid:border-destructive aria-invalid:ring-destructive/24 [&>svg]:pointer-events-none [&>svg]:size-3",
+  "inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border border-transparent px-2 py-0.5 text-xs font-medium leading-none whitespace-nowrap transition-[background-color,border-color,color] focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background aria-invalid:border-destructive aria-invalid:ring-destructive/24 [&>svg]:pointer-events-none [&>svg]:size-3",
   {
     variants: {
       variant: {
@@ -15,10 +15,10 @@ const badgeVariants = cva(
         destructive:
           "bg-destructive text-destructive-foreground focus-visible:ring-destructive/30 [a&]:hover:bg-destructive/88",
         outline:
-          "border-border text-foreground [a&]:hover:bg-secondary/60 [a&]:hover:text-foreground",
+          "border-border bg-secondary/40 text-foreground shadow-[inset_0_1px_0_var(--highlight)] [a&]:hover:bg-secondary/60 [a&]:hover:text-foreground",
         ghost:
           "text-muted-foreground [a&]:hover:bg-secondary/60 [a&]:hover:text-foreground",
-        link: "text-primary underline-offset-4 [a&]:hover:underline",
+        link: "text-accent-text underline-offset-4 [a&]:hover:underline",
       },
     },
     defaultVariants: {

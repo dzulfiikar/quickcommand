@@ -19,7 +19,7 @@ export function SnippetPreviewLine(props: {
           <span
             key={`p-${index}`}
             className={cn(
-              "mx-0.5 inline-flex items-center rounded-sm border border-border-strong bg-secondary/60 px-1 py-px font-mono text-[10.5px] leading-none text-foreground/90 align-middle",
+              "mx-0.5 inline-flex items-center rounded-sm border border-border-strong bg-secondary/60 px-1 py-px font-mono text-2xs leading-none text-foreground/90 align-middle",
               props.paramClassName,
             )}
           >

@@ -20,7 +20,9 @@ export const AboutPanel = memo(function AboutPanel(props: {
   updateInfo: AppUpdateInfo | null;
 }) {
   const updateAvailable = props.updateInfo?.availability === "update-available";
-  const checkingLabel = props.updateChecking ? "Checking…" : "Check for updates";
+  const checkingLabel = props.updateChecking
+    ? "Checking…"
+    : "Check for updates";
   const downloadLabel = updateAvailable
     ? `Download v${props.updateInfo?.latestVersion}`
     : "Open latest release";
@@ -34,11 +36,11 @@ export const AboutPanel = memo(function AboutPanel(props: {
               className="h-4 w-4 text-muted-foreground"
               aria-hidden="true"
             />
-            <h2 className="text-[15px] font-semibold leading-tight text-foreground">
+            <h2 className="text-lg font-semibold leading-tight text-foreground">
               QuickCommand
             </h2>
           </div>
-          <p className="font-mono text-[11px] text-muted-foreground">
+          <p className="font-mono text-xs text-muted-foreground">
             Version {__APP_VERSION__}
           </p>
         </div>
@@ -49,12 +51,12 @@ export const AboutPanel = memo(function AboutPanel(props: {
         ) : null}
       </header>
 
-      <p className="max-w-[60ch] text-[13px] leading-relaxed text-muted-foreground">
+      <p className="max-w-[60ch] text-base leading-relaxed text-muted-foreground">
         A local-first macOS snippet launcher. Save once, summon with a global
         shortcut, paste into the app you are already in.
       </p>
 
-      <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-[12px]">
+      <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
         <dt className="text-muted-foreground">Built by</dt>
         <dd className="text-right text-foreground">Dzulfikar</dd>
         <dt className="text-muted-foreground">Repository</dt>
@@ -77,7 +79,7 @@ export const AboutPanel = memo(function AboutPanel(props: {
       <section className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between">
           <h3 className="section-label">Updates</h3>
-          <span className="text-[12px] text-foreground">
+          <span className="text-sm text-foreground">
             {props.updateChecking
               ? "Checking GitHub Releases…"
               : updateAvailable
@@ -90,7 +92,7 @@ export const AboutPanel = memo(function AboutPanel(props: {
 
         {props.updateInfo ? (
           <div className="surface-inset flex flex-col gap-3 px-3 py-3">
-            <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-[12px]">
+            <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
               <span className="text-muted-foreground">Latest release</span>
               <span className="text-right text-foreground">
                 v{props.updateInfo.latestVersion}
@@ -105,7 +107,7 @@ export const AboutPanel = memo(function AboutPanel(props: {
             <div className="space-y-1">
               <p className="section-label">Release notes</p>
               <ScrollArea className="max-h-40 pr-2">
-                <p className="whitespace-pre-wrap text-[12px] leading-relaxed text-foreground/85">
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/85">
                   {props.updateInfo.releaseNotes}
                 </p>
               </ScrollArea>
@@ -114,7 +116,7 @@ export const AboutPanel = memo(function AboutPanel(props: {
         ) : null}
 
         {props.updateError ? (
-          <div className="notice notice--error px-3 py-2.5 text-[12px] leading-relaxed">
+          <div className="notice notice--error px-3 py-2.5 text-sm leading-relaxed">
             {props.updateError}
           </div>
         ) : null}
