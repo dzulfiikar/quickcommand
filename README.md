@@ -1,126 +1,213 @@
+<div align="center">
+
 # QuickCommand
 
-QuickCommand is a macOS menu bar app for people who reuse commands, prompts, replies, and text snippets all day. Save once, summon it instantly with a global shortcut, and paste into the app you are already using.
+**Your commands, prompts, and snippets — one keystroke away.**
 
-Built for fast hands-off insertion, QuickCommand combines a command palette, a compact menu bar popover, and a full snippet library in one local-first desktop app.
+A keyboard-first macOS menu bar app for everyone who retypes the same commands, replies, and templates all day. Save once, summon instantly with a global shortcut, and paste straight into the app you're already in.
+
+[Features](#features) · [Screenshots](#screenshots) · [Install](#install) · [Usage](#usage) · [Development](#development) · [License](#license)
+
+`Electron 41` · `React 19` · `TypeScript` · `Bun` · `Swift helper` · macOS (Apple Silicon)
+
+</div>
+
+---
 
 ## Why QuickCommand
 
-- **Stop retyping repeatable work**: keep shell commands, release notes, support replies, prompts, and templates one shortcut away.
-- **Search feels immediate**: fuzzy matching is ranked by relevance, recency, and use count, so frequently used snippets rise to the top.
-- **Paste into real apps, not just into QuickCommand**: the app hides, writes to the clipboard, triggers `Cmd+V`, then restores your clipboard contents.
-- **Stay in your flow**: use the global shortcut for fast lookup, the menu bar for quick access, and the library window when you need full editing control.
-- **Keep everything on your Mac**: snippets and settings are stored locally as JSON with import/export support.
+You already know the command. You just don't want to type `kubectl logs deployment/api-gateway --tail=250 --follow` for the hundredth time — or hunt through a notes app for that release checklist, that support reply, that prompt.
 
-## What You Get
+QuickCommand keeps all of it a single shortcut away and pastes it **into whatever app has focus** — Terminal, your editor, a browser textarea, Slack. No copy-paste shuffle, no context switch.
 
-- **Global command palette** for keyboard-first search and paste
-- **Menu bar popover** for quick access without opening the full library
-- **Snippet library window** with create, edit, delete, search, import, and export
-- **Parameterized snippets** using placeholders like `{name}` and `{place}`
-- **Onboarding flow** for Accessibility permission and shortcut setup
-- **Customizable settings** for launch at login, startup behavior, and clipboard restore delay
-- **Usage-aware search results** powered by fuzzy matching plus recency/use-count sorting
-- **In-app update checks** that compare your version with GitHub Releases and open a manual download flow for unsigned macOS builds
+- **Stop retyping repeatable work** — shell commands, release notes, support replies, prompts, and templates stay one shortcut away.
+- **Paste into real apps, not just into QuickCommand** — the app hides, writes to the clipboard, fires `Cmd+V`, then restores your previous clipboard contents.
+- **Search that feels instant** — fuzzy matching ranked by relevance, recency, and how often you use each snippet, so your most-used items rise to the top.
+- **Stay in your flow** — the global palette for fast lookup, the menu bar popover for quick access, the library window for full editing control.
+- **Everything stays on your Mac** — snippets and settings are plain local JSON with import/export. No cloud, no account, no telemetry.
+
+---
+
+## Features
+
+### Three surfaces, one library
+
+- **🎯 Global command palette** — a centered, keyboard-first overlay. Hit your shortcut anywhere, type, press `Enter` to paste the top result, `Esc` to dismiss. Arrow keys to navigate.
+- **📋 Menu bar popover** — a compact, fully keyboard-navigable menu bar view for quick access, recents, and common actions without opening the full window.
+- **🗂️ Snippet library** — the full management window: create, edit, delete, search, import, and export your collection.
+
+### Snippets that do more
+
+- **🔡 Parameterized snippets** — drop placeholders like `{{name}}` or `{{env}}` into a snippet, then fill them in at paste time. Build a template once, reuse it everywhere.
+- **📈 Usage-aware ranking** — QuickCommand tracks use count and last-used time (internally, never shown as editable fields) to surface what you actually reach for.
+- **🔁 Import / export** — versioned JSON bundles, so you can back up, move between machines, or share a starter set.
+
+### Built to feel native
+
+- **🎨 Six color palettes × light / dark / system** — Sand, Nord, Dracula, Tokyo Night, Gruvbox, and Solarized, each calibrated for both light and dark mode and audited for WCAG AA contrast.
+- **⌨️ Keyboard-first everywhere** — every surface is navigable without touching the mouse.
+- **🧭 Guided onboarding** — first run walks you through Accessibility permission and confirms your global shortcut actually registered.
+- **⚙️ Sensible settings** — launch at login, show-window-on-startup, clipboard restore delay, theme, and palette.
+- **🔔 In-app update checks** — compares your version against GitHub Releases and opens a manual download flow for unsigned macOS builds.
+- **🚫 Menu bar utility** — runs as `LSUIElement`, so there's no Dock icon getting in your way.
+
+---
 
 ## Screenshots
 
-### Library Window
-
-![QuickCommand library window](screenshots/library-window.png)
-
 ### Command Palette
+
+The global overlay — type, navigate with arrows, `Enter` to paste, `Esc` to close.
 
 ![QuickCommand command palette](screenshots/command-palette.png)
 
-### Menubar Popover
+### Snippet Library
+
+Full CRUD with live search, parameter editing, and usage stats.
+
+![QuickCommand library window](screenshots/library-window.png)
+
+### Menu Bar Popover
+
+Compact quick access with recents, paste buttons, and common actions.
 
 ![QuickCommand menubar popover](screenshots/menubar-popover.png)
 
-## Current Product Shape
-
-QuickCommand currently ships as a macOS-only Electron app with four main surfaces:
-
-- **Onboarding**: explains the app, requests Accessibility access, and lets you confirm the global shortcut.
-- **Palette**: a centered search UI for fast snippet lookup and paste.
-- **Library**: the main management window for your snippet collection.
-- **Tray popover**: a compact, paged menu bar view for quick snippet access and common actions.
-
-The default shortcut is `CommandOrControl+Alt+Space`, and it can be changed from the library settings panel.
+---
 
 ## Best For
 
-- Developers who repeat Git, Bun, Docker, Kubernetes, or deployment commands
-- Operators who need incident-response snippets and production runbooks close at hand
-- Support, sales, and ops teams who reuse replies and structured text
-- Anyone who wants a local snippet launcher instead of a cloud workspace
+- **Developers** who repeat Git, Bun, Docker, Kubernetes, or deployment commands all day.
+- **Operators / SREs** who need incident-response snippets and production runbooks within reach.
+- **Support, sales, and ops teams** reusing replies and structured text.
+- **Prompt engineers** keeping a tuned library of LLM prompts on hand.
+- **Anyone** who'd rather have a fast local launcher than a cloud workspace.
 
-## Requirements
+---
 
-- macOS M1 or later
-- Accessibility permission for paste automation
+## Install
 
-## Tech Overview
+> QuickCommand currently ships as an **unsigned** macOS app for Apple Silicon. Builds aren't notarized yet, so macOS Gatekeeper will warn on first launch — see the workaround below.
 
-### Core Dependencies
+### Requirements
 
-- **Electron 41 + React 19 + TypeScript** for the desktop UI
-- **Bun** for package management, scripts, and tests
-- **electron-vite** for main, preload, and renderer builds
-- **Fuse.js** for fuzzy snippet search
-- **Zod** for snippet/settings validation
-- **Swift helper** for macOS Accessibility checks, settings deep links, and paste automation
+- macOS on Apple Silicon (M1 or later)
+- **Accessibility permission** (QuickCommand prompts for this during onboarding — it's required to simulate paste)
 
-### Development
+### From a release
+
+1. Download the latest `QuickCommand-<version>-arm64.dmg` from the [Releases](https://github.com/dzulfiikar/quickcommand/releases) page.
+2. Open the DMG and drag **QuickCommand** to `/Applications`.
+3. On first launch, macOS may block the unsigned app. Either:
+   - Right-click the app → **Open** → **Open** again in the dialog, **or**
+   - Run `xattr -dr com.apple.quarantine /Applications/QuickCommand.app` in Terminal.
+4. Complete onboarding: grant **Accessibility** permission and confirm your global shortcut.
+
+### Build it yourself
+
+See [Development](#development) below — `bun run package:dir` produces a local `.app` bundle.
+
+---
+
+## Usage
+
+1. **Save a snippet** — open the library (menu bar → *Open Library*) and add a title plus the command or text. Add `{{placeholders}}` for anything you fill in at paste time.
+2. **Summon the palette** — press the global shortcut (default `⌃⌥Space` / `CommandOrControl+Alt+Space`) from any app.
+3. **Search and paste** — type a few characters, press `Enter` on the top result (or arrow to another), and QuickCommand pastes it into the app you were just in.
+4. **Tweak the shortcut** — change it anytime from the library's settings panel.
+
+QuickCommand hides its UI first, swaps the clipboard, triggers the paste, then restores your original clipboard contents — so insertion never clobbers what you'd already copied.
+
+---
+
+## Development
+
+### Tech stack
+
+- **Electron 41 + React 19 + TypeScript** — desktop UI
+- **Bun** — package management, scripts, and tests
+- **electron-vite** — main / preload / renderer builds
+- **Tailwind CSS v4 + Radix UI + Framer Motion** — renderer design system
+- **Fuse.js** — fuzzy snippet search
+- **Zod** — snippet and settings validation
+- **Swift helper** — macOS Accessibility checks, settings deep links, and `Cmd+V` paste automation
+
+All OS integration, persistence, search, and paste automation live in the Electron main process. Renderer windows stay sandboxed (`contextIsolation`, `sandbox`, `nodeIntegration: false`, strict local-only CSP).
+
+### Setup
 
 ```bash
 # Install dependencies
 bun install
 
-# Start Electron in development mode
+# Start Electron in development mode (also builds the Swift helper)
 bun run dev
 
-# Optional renderer-only browser preview
+# Renderer-only browser preview (mocked Electron API)
 bun run dev:browser
-
-# Run tests and type checks
-bun test
-bun run typecheck
-
-# Build and package
-bun run build
-bun run build:helper
-bun run package:dir
 ```
 
-#### Browser preview routes
+### Verify
 
-`bun run dev:browser` boots Vite at `http://localhost:5199/` with the in-memory
-mock preload (`src/renderer/src/mock-preload.ts`) in place of the Electron API.
-The renderer chooses which surface to render from the URL hash:
+```bash
+bun test            # all tests
+bun test tests/unit # unit tests only
+bun run typecheck   # TypeScript
+bun run lint        # Biome
+```
+
+### Build & package
+
+```bash
+bun run build:helper   # compile the Swift helper
+bun run build          # build main / preload / renderer
+bun run package:dir    # local unsigned .app bundle
+bun run dist           # full DMG + zip artifacts
+```
+
+### Browser preview routes
+
+`bun run dev:browser` boots Vite at `http://localhost:5199/` with an in-memory mock preload in place of the Electron API. The renderer picks its surface from the URL hash:
 
 | Window | URL |
 |---|---|
-| Library (default) | `http://localhost:5199/` or `http://localhost:5199/#library` |
+| Library (default) | `http://localhost:5199/` or `#library` |
 | Palette | `http://localhost:5199/#palette` |
 | Onboarding | `http://localhost:5199/#onboarding` |
 | Tray popover | `http://localhost:5199/#tray` |
 
-Notes:
+In browser preview, Accessibility, hotkey registration, and `Cmd+V` paste are mocked — UI states render, but no OS-level action runs. Tray and Palette are sized for native popovers, so they look small against a full browser viewport.
 
-- Tray and Palette are sized for native popovers and centered overlays, so they
-  appear small against the full browser viewport.
-- Onboarding's final "Open library" action calls `window.close()`, which the
-  browser ignores; step navigation still works.
-- Accessibility, hotkey registration, and Cmd+V paste are mocked. UI states
-  render, but no real OS-level action is triggered.
+### Project layout
 
-### Contribution Guide
+```text
+src/main/       Electron lifecycle, tray/window management, IPC, native-service orchestration
+src/preload/    Secure contextBridge surface (kept in sync with src/shared/app-api.ts)
+src/renderer/   React UI, Tailwind styling, browser preview entry
+src/shared/     Zod-backed shared models and cross-process contracts
+native/         Swift helper source (Accessibility, settings deep links, paste, caret movement)
+tests/          Bun unit and integration coverage
+docs/plans/     Dated implementation and product plans
+```
 
-If you contribute to QuickCommand:
+Each area has its own `AGENTS.md` with closer guidance — read the nearest one before editing files in that directory.
 
-- keep product-facing changes aligned with the current macOS app behavior
-- run `bun test` and `bun run typecheck` before handing off changes
-- use `bun run build:helper` when touching native paste automation or packaging flows
-- update [README.md](README.md) and the root `screenshots/` folder when UI changes affect what users see
-- prefer small, focused changes over broad refactors unless the task explicitly calls for them
+---
+
+## Contributing
+
+- Keep product-facing changes aligned with current macOS app behavior.
+- Run `bun test` and `bun run typecheck` before handing off changes.
+- Run `bun run build:helper` when touching native paste automation or packaging.
+- Update this README and the `screenshots/` folder when UI changes affect what users see.
+- Prefer small, focused changes over broad refactors unless the task calls for it.
+
+---
+
+## License
+
+Released under the [GNU General Public License v3.0](LICENSE).
+
+QuickCommand is free software: you can redistribute it and/or modify it under the terms of the GPL — but any distributed derivative must also remain open-source under the same license.
+
+Copyright © 2026 Dzulfikar.
