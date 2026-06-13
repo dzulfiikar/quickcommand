@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import {
+  BookOpen,
   Info,
-  Library,
   LogOut,
   Pencil,
   Plus,
@@ -471,18 +471,18 @@ export function TrayScreen(props: ScreenProps) {
 
       <footer className="grid grid-cols-3 gap-1 border-t border-border p-2">
         <button
-          className="list-item pressable flex flex-col items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-foreground"
+          className="list-item pressable !flex flex-col items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-foreground"
           type="button"
           onClick={() => void props.onShowLibrary()}
         >
-          <Library
+          <BookOpen
             className="h-[18px] w-[18px] text-muted-foreground"
             aria-hidden="true"
           />
           Library
         </button>
         <button
-          className="list-item pressable flex flex-col items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-foreground"
+          className="list-item pressable !flex flex-col items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-foreground"
           type="button"
           onClick={() => setShowAbout(true)}
         >
@@ -493,7 +493,7 @@ export function TrayScreen(props: ScreenProps) {
           About
         </button>
         <button
-          className="list-item pressable flex flex-col items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-destructive hover:!bg-destructive/12"
+          className="list-item pressable !flex flex-col items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-destructive hover:!bg-destructive/12"
           type="button"
           onClick={() => void props.onQuit()}
         >

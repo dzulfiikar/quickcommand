@@ -14,6 +14,9 @@ export function createTrayPopoverWindow(): BrowserWindow {
     transparent: true,
     alwaysOnTop: true,
     vibrancy: "menu",
+    // Accessory app: a panel window becomes key without activating the app,
+    // so the popover holds focus instead of blurring away immediately.
+    type: "panel",
     webPreferences: {
       preload: getPreloadPath(import.meta.url),
       contextIsolation: true,

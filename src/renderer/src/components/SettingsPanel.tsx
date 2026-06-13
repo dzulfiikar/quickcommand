@@ -1,10 +1,10 @@
 import { Check, Download, Monitor, Moon, Sun, Upload } from "lucide-react";
 import { memo, useEffect, useId, useState } from "react";
+import { ShortcutRecorder } from "@/components/ShortcutRecorder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { formatShortcut, validateShortcut } from "@/lib/shortcut";
 import { cn } from "@/lib/utils";
 import type {
   PalettePreference,
@@ -141,30 +141,13 @@ export const SettingsPanel = memo(function SettingsPanel(props: {
   const delayId = useId();
   const launchAtLoginId = useId();
   const startupId = useId();
-  const [shortcut, setShortcut] = useState(props.settings.globalShortcut ?? "");
-  const [shortcutFocused, setShortcutFocused] = useState(false);
   const [shortcutSavedAt, setShortcutSavedAt] = useState<number | null>(null);
 
-  const validation = validateShortcut(shortcut);
-  const showShortcutError = !validation.ok && shortcut.trim().length > 0;
-  const friendlyShortcut = formatShortcut(shortcut);
-
-  useEffect(() => {
-    setShortcut(props.settings.globalShortcut ?? "");
-  }, [props.settings.globalShortcut]);
-
-  useEffect(() => {
-    const timer = setTimeout(async () => {
-      const value = shortcut.trim() || null;
-      const result = validateShortcut(shortcut);
-      if (!result.ok) return;
-      if (value === props.settings.globalShortcut) return;
-
-      await props.onSaveSettings({ globalShortcut: value });
-      setShortcutSavedAt(Date.now());
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [shortcut, props.onSaveSettings, props.settings.globalShortcut]);
+  async function handleShortcutChange(value: string | null) {
+    if (value === (props.settings.globalShortcut ?? null)) return;
+    await props.onSaveSettings({ globalShortcut: value });
+    setShortcutSavedAt(Date.now());
+  }
 
   useEffect(() => {
     if (shortcutSavedAt === null) return;
@@ -210,44 +193,20 @@ export const SettingsPanel = memo(function SettingsPanel(props: {
               Global shortcut
             </Label>
             <span aria-live="polite" className="text-xs text-muted-foreground">
-              {showShortcutError
-                ? null
-                : shortcutSavedAt
-                  ? "Saved"
-                  : shortcutFocused || shortcut
-                    ? friendlyShortcut
-                    : null}
+              {shortcutSavedAt ? "Saved" : null}
             </span>
           </div>
-          <p className="field-note">
-            The keystroke that summons QuickCommand from any app. Use the
-            modifier names your keyboard sends (e.g.{" "}
-            <code className="font-mono">CommandOrControl+Alt+Space</code>).
+          <p id={`${shortcutId}-hint`} className="field-note">
+            The keystroke that summons QuickCommand from any app. Click below
+            and press the keys you want.
           </p>
         </header>
-        <Input
+        <ShortcutRecorder
           id={shortcutId}
-          className="font-mono text-base"
-          value={shortcut}
-          spellCheck={false}
-          autoCapitalize="none"
-          autoCorrect="off"
-          aria-invalid={showShortcutError ? true : undefined}
-          aria-describedby={
-            showShortcutError ? `${shortcutId}-error` : undefined
-          }
-          onFocus={() => setShortcutFocused(true)}
-          onBlur={() => setShortcutFocused(false)}
-          onChange={(event) => setShortcut(event.target.value)}
+          value={props.settings.globalShortcut}
+          onChange={(value) => void handleShortcutChange(value)}
+          aria-describedby={`${shortcutId}-hint`}
         />
-        {showShortcutError && !validation.ok ? (
-          <p
-            id={`${shortcutId}-error`}
-            className="text-xs text-destructive-foreground"
-          >
-            {validation.reason}
-          </p>
-        ) : null}
       </section>
 
       {props.showClipboardDelay ? (

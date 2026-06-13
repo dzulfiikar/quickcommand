@@ -1,6 +1,6 @@
 {
   "name": "quickcommand",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "private": true,
   "license": "GPL-3.0-or-later",
   "description": "macOS menubar command and text snippet launcher built with Electron, TypeScript, and Bun.",

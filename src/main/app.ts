@@ -18,6 +18,7 @@ import { DiagnosticLogger } from "./services/diagnostic-logger";
 import { createLibraryWindow } from "./windows/library-window";
 import { createOnboardingWindow } from "./windows/onboarding-window";
 import { createPaletteWindow } from "./windows/palette-window";
+import { shouldHideOnBlur } from "./windows/transient-window";
 import {
   createTrayPopoverWindow,
   positionTrayPopover,
@@ -37,6 +38,8 @@ type ManagedWindows = {
 let services: AppServices;
 let logger: DiagnosticLogger | null = null;
 let tray: Tray | null = null;
+let lastPaletteShownAt = 0;
+let lastTrayShownAt = 0;
 const windows: ManagedWindows = {
   library: null,
   onboarding: null,
@@ -191,14 +194,20 @@ async function toggleTrayPopover(): Promise<void> {
 
   window.show();
   window.focus();
+  lastTrayShownAt = Date.now();
   logInfo("window", "Tray popover shown");
 }
 
 async function showPalette(): Promise<void> {
   const window = await ensureWindow("palette");
   centerWindowOnActiveDisplay(window);
+  // The palette is a panel window (see createPaletteWindow): it becomes the key
+  // window without activating the accessory app, so show()+focus() is enough to
+  // hold focus and keyboard input. Record the show time so the blur handler can
+  // ignore any stray blur that arrives before focus settles.
   window.show();
   window.focus();
+  lastPaletteShownAt = Date.now();
   logInfo("window", "Palette shown");
 }
 
@@ -244,10 +253,20 @@ async function ensureWindow(
   window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   attachWindowDiagnostics(kind, window);
   window.on("blur", () => {
-    if (kind === "palette" || kind === "tray") {
-      logInfo("window", "Transient window hidden on blur", { kind });
-      window.hide();
+    if (kind !== "palette" && kind !== "tray") {
+      return;
     }
+
+    // Ignore the stray blur that fires while macOS is still handing key-window
+    // status to a freshly shown accessory-app window.
+    const shownAt = kind === "palette" ? lastPaletteShownAt : lastTrayShownAt;
+    if (!shouldHideOnBlur(shownAt, Date.now())) {
+      logInfo("window", "Ignoring blur within show grace period", { kind });
+      return;
+    }
+
+    logInfo("window", "Transient window hidden on blur", { kind });
+    window.hide();
   });
   window.on("closed", () => {
     logInfo("window", "Window closed", { kind });
