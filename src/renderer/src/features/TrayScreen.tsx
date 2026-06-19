@@ -1,13 +1,5 @@
 import { motion } from "framer-motion";
-import {
-  BookOpen,
-  Info,
-  LogOut,
-  Pencil,
-  Plus,
-  Search,
-  Trash2,
-} from "lucide-react";
+import { BookOpen, Info, LogOut, Pencil, Plus, Trash2 } from "lucide-react";
 import {
   type KeyboardEvent as ReactKeyboardEvent,
   useEffect,
@@ -17,6 +9,7 @@ import {
 } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useReportContentHeight } from "@/hooks/useReportContentHeight";
 import { surfaceIn } from "@/lib/motion";
 import {
   getSnippetPreviewParts,
@@ -37,12 +30,14 @@ import type { ScreenProps } from "./screen-props";
 import { getTrayPageItems, getTrayPaginationState } from "./tray-pagination";
 
 function TrayShell(props: { children: React.ReactNode }) {
+  const shellRef = useReportContentHeight<HTMLDivElement>();
   return (
     <motion.div
+      ref={shellRef}
       variants={surfaceIn}
       initial="hidden"
       animate="visible"
-      className="surface-float flex h-full min-h-0 flex-col overflow-hidden"
+      className="surface-float mx-auto flex w-full flex-col overflow-hidden"
     >
       {props.children}
     </motion.div>
@@ -256,11 +251,11 @@ export function TrayScreen(props: ScreenProps) {
         <ScrollArea className="flex-1 min-h-0">
           <div className="flex flex-col gap-5 p-5">
             <div className="flex items-start justify-between gap-4">
-              <div className="space-y-1">
+              <div className="pane-header">
                 <p className="section-label">
                   {props.editingId ? "Editing" : "New"}
                 </p>
-                <h2 className="text-xl font-semibold tracking-[-0.005em] text-foreground">
+                <h2 className="pane-title-sm">
                   {props.editingId
                     ? "Edit snippet"
                     : "Save it once, paste it forever"}
@@ -291,14 +286,16 @@ export function TrayScreen(props: ScreenProps) {
 
   return (
     <TrayShell>
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <Search
-          className="h-4 w-4 shrink-0 text-muted-foreground"
+      <header className="flex items-center gap-2.5 border-b border-border px-4 py-3">
+        <span
           aria-hidden="true"
-        />
+          className="shrink-0 select-none font-mono text-md font-bold leading-none text-accent-text"
+        >
+          ▸
+        </span>
         <input
           aria-label="Search snippets"
-          className="flex-1 bg-transparent text-md text-foreground placeholder:text-muted-foreground outline-none"
+          className="flex-1 bg-transparent font-mono text-md text-foreground placeholder:text-muted-foreground outline-none"
           placeholder="Search snippets"
           ref={queryInputRef}
           type="text"
@@ -329,12 +326,12 @@ export function TrayScreen(props: ScreenProps) {
         </Button>
       </header>
 
-      <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
+      <div className="flex min-h-0 flex-col overflow-hidden">
         {visibleSnippets.length > 0 ? (
-          <ScrollArea className="flex-1 min-h-0">
+          <ScrollArea className="max-h-[22rem] min-h-0">
             <ul
               ref={listRef}
-              className="flex flex-col gap-1 p-2"
+              className="flex flex-col gap-px p-2"
               role="listbox"
               aria-label="Snippets"
             >
@@ -354,7 +351,7 @@ export function TrayScreen(props: ScreenProps) {
                       role="option"
                       aria-selected={isActive}
                       tabIndex={isActive ? 0 : -1}
-                      className="flex h-11 min-w-0 flex-1 cursor-pointer items-center gap-3 text-left outline-none"
+                      className="flex h-10 min-w-0 flex-1 cursor-pointer items-center gap-3 text-left outline-none"
                       onClick={() => handleInsert(snippet.id)}
                       onFocus={() => setActiveIndex(index)}
                       onMouseEnter={() => setActiveIndex(index)}
@@ -370,8 +367,8 @@ export function TrayScreen(props: ScreenProps) {
                         className="snippet-preview-value block min-w-0 flex-1 font-mono text-xs text-muted-foreground"
                       />
                       {snippet.useCount > 0 ? (
-                        <span className="shrink-0 font-mono text-2xs tabular-nums text-muted-foreground">
-                          {snippet.useCount}×
+                        <span className="count-chip shrink-0">
+                          {snippet.useCount}
                         </span>
                       ) : null}
                     </button>
@@ -402,7 +399,7 @@ export function TrayScreen(props: ScreenProps) {
             </ul>
           </ScrollArea>
         ) : (
-          <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 py-10 text-center">
+          <div className="flex flex-col items-center justify-center gap-2 px-4 py-14 text-center">
             <p className="text-md font-semibold text-foreground">
               {query ? "Nothing matches" : "No snippets yet"}
             </p>
@@ -422,7 +419,7 @@ export function TrayScreen(props: ScreenProps) {
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-2 text-xs text-muted-foreground">
+        <div className="statusbar justify-between px-4 py-1.5">
           <div className="flex items-center gap-3">
             {visibleSnippets.length > 0 ? (
               <>
@@ -493,11 +490,14 @@ export function TrayScreen(props: ScreenProps) {
           About
         </button>
         <button
-          className="list-item pressable !flex flex-col items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-destructive hover:!bg-destructive/12"
+          className="list-item pressable group/quit !flex flex-col items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-muted-foreground hover:!bg-destructive/12 hover:!text-destructive"
           type="button"
           onClick={() => void props.onQuit()}
         >
-          <LogOut className="h-[18px] w-[18px]" aria-hidden="true" />
+          <LogOut
+            className="h-[18px] w-[18px] text-muted-foreground transition-colors group-hover/quit:text-destructive"
+            aria-hidden="true"
+          />
           Quit
         </button>
       </footer>

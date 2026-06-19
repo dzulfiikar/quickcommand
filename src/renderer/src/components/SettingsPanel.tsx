@@ -33,7 +33,7 @@ const PALETTE_OPTIONS: {
   label: string;
   swatch: string;
 }[] = [
-  { value: "sand", label: "Sand", swatch: "oklch(0.82 0.03 78)" },
+  { value: "sand", label: "TTY amber", swatch: "oklch(0.8 0.15 75)" },
   { value: "nord", label: "Nord", swatch: "oklch(0.79 0.06 215)" },
   { value: "dracula", label: "Dracula", swatch: "oklch(0.74 0.15 300)" },
   {
@@ -160,7 +160,7 @@ export const SettingsPanel = memo(function SettingsPanel(props: {
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-2.5">
           <header className="space-y-1">
-            <Label className="text-base text-foreground">Appearance</Label>
+            <Label className="section-label">Appearance</Label>
             <p className="field-note">
               Match the system, or lock QuickCommand to light or dark.
             </p>
@@ -173,7 +173,7 @@ export const SettingsPanel = memo(function SettingsPanel(props: {
 
         <div className="flex flex-col gap-2.5">
           <header className="space-y-1">
-            <Label className="text-base text-foreground">Color theme</Label>
+            <Label className="section-label">Color theme</Label>
             <p className="field-note">
               The accent and surface palette worn across every window. Each
               works in both light and dark.

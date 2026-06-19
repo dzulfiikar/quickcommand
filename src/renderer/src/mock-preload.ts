@@ -154,6 +154,9 @@ const mockAPI = {
     async hidePalette(): Promise<void> {
       console.log("[mock] hidePalette");
     },
+    async resizeWindow(height: number): Promise<void> {
+      console.log("[mock] resizeWindow", height);
+    },
     async openUpdateDownload(url: string): Promise<void> {
       console.log("[mock] openUpdateDownload", url);
     },

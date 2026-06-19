@@ -122,7 +122,10 @@ describe("renderer theme", () => {
     // hue must stay within a tight band so e.g. Nord never drifts off blue.
     // Each palette's expected hue and the tolerance band (in OKLCH degrees).
     const expectedHue: Record<string, number> = {
-      sand: 74,
+      // "sand" keeps its key for back-compat but its accent is now the
+      // TTY-amber phosphor (hue ~70: dark 75 / light 64), replacing the
+      // former Iris indigo (~280).
+      sand: 70,
       nord: 228,
       dracula: 300,
       "tokyo-night": 263,

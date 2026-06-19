@@ -1,8 +1,9 @@
 import { join } from "node:path";
 import {
   app,
-  type BrowserWindow,
+  BrowserWindow,
   globalShortcut,
+  type IpcMainInvokeEvent,
   nativeImage,
   shell,
   Tray,
@@ -18,7 +19,10 @@ import { DiagnosticLogger } from "./services/diagnostic-logger";
 import { createLibraryWindow } from "./windows/library-window";
 import { createOnboardingWindow } from "./windows/onboarding-window";
 import { createPaletteWindow } from "./windows/palette-window";
-import { shouldHideOnBlur } from "./windows/transient-window";
+import {
+  shouldHideOnBlur,
+  type TransientWindowKind,
+} from "./windows/transient-window";
 import {
   createTrayPopoverWindow,
   positionTrayPopover,
@@ -27,6 +31,10 @@ import {
   centerWindowOnActiveDisplay,
   loadWindow,
 } from "./windows/window-loader";
+import {
+  clampWindowHeight,
+  MIN_TRANSIENT_WINDOW_HEIGHT,
+} from "./windows/window-sizing";
 
 type ManagedWindows = {
   library: BrowserWindow | null;
@@ -137,6 +145,9 @@ function registerHandlers(): void {
       logInfo("updates", "Opening update download", { url });
       await services.updates.openUpdateDownload(url);
     },
+    resizeWindow(event, height) {
+      resizeTransientWindow(event, height);
+    },
     showLibrary() {
       void showLibrary();
     },
@@ -223,6 +234,64 @@ async function showOnboarding(): Promise<void> {
   window.show();
   window.focus();
   logInfo("window", "Onboarding shown");
+}
+
+// Original design heights of the transient floats; content sizing only ever
+// shrinks below these, never grows past them (so a long list still scrolls).
+const TRANSIENT_WINDOW_MAX_HEIGHT: Record<TransientWindowKind, number> = {
+  palette: 500,
+  tray: 520,
+};
+
+function resizeTransientWindow(
+  event: IpcMainInvokeEvent,
+  height: number,
+): void {
+  const window = BrowserWindow.fromWebContents(event.sender);
+  if (!window || window.isDestroyed()) {
+    return;
+  }
+
+  // Only the transient floats resize to content; library/onboarding are normal
+  // windows the user can size themselves, so ignore any stray request.
+  const kind = transientKindForWindow(window);
+  if (!kind) {
+    return;
+  }
+
+  const clamped = clampWindowHeight(height, {
+    min: MIN_TRANSIENT_WINDOW_HEIGHT,
+    max: TRANSIENT_WINDOW_MAX_HEIGHT[kind],
+  });
+
+  const [width] = window.getContentSize();
+  if (window.getContentSize()[1] === clamped) {
+    return;
+  }
+
+  // setContentSize keeps the window's level and type ("panel"), so the
+  // key-window-without-activation focus behavior is preserved. It also keeps
+  // the top-left corner fixed, so the float grows/shrinks downward — the
+  // palette stays put under its top anchor without re-centering.
+  window.setContentSize(width, clamped, false);
+
+  // Re-anchor the tray popover so it stays centered under the tray icon after
+  // its width-unchanged height changes (idempotent for a fixed-width window).
+  if (kind === "tray" && tray) {
+    positionTrayPopover(window, tray.getBounds());
+  }
+}
+
+function transientKindForWindow(
+  window: BrowserWindow,
+): TransientWindowKind | null {
+  if (window === windows.palette) {
+    return "palette";
+  }
+  if (window === windows.tray) {
+    return "tray";
+  }
+  return null;
 }
 
 async function ensureWindow(

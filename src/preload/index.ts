@@ -67,6 +67,8 @@ const api: QuickCommandAPI = {
     showLibrary: () => ipcRenderer.invoke(channels.appShowLibrary),
     showOnboarding: () => ipcRenderer.invoke(channels.appShowOnboarding),
     hidePalette: () => ipcRenderer.invoke(channels.appHidePalette),
+    resizeWindow: (height) =>
+      ipcRenderer.invoke(channels.appResizeWindow, height),
     openUpdateDownload: (url) =>
       ipcRenderer.invoke(channels.appOpenUpdateDownload, url),
     quit: () => ipcRenderer.invoke(channels.appQuit),

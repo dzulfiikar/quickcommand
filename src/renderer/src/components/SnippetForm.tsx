@@ -232,7 +232,7 @@ export const SnippetForm = memo(function SnippetForm(props: {
               <Badge
                 key={p}
                 variant="outline"
-                className="rounded-md px-1.5 py-0.5 font-mono text-2xs"
+                className="px-1.5 py-0.5 text-2xs"
               >
                 {`{${p}}`}
               </Badge>

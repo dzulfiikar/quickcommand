@@ -1,4 +1,4 @@
-import { app, ipcMain } from "electron";
+import { app, type IpcMainInvokeEvent, ipcMain } from "electron";
 
 import type { AppUpdateInfo } from "../../shared/update-model";
 import { channels } from "./channels";
@@ -7,6 +7,7 @@ type AppCallbacks = {
   checkForUpdates(): Promise<AppUpdateInfo>;
   hidePalette(): void;
   openUpdateDownload(url: string): Promise<void> | void;
+  resizeWindow(event: IpcMainInvokeEvent, height: number): void;
   showLibrary(): void;
   showOnboarding(): void;
 };
@@ -20,6 +21,9 @@ export function registerAutomationHandlers(callbacks: AppCallbacks): void {
     callbacks.openUpdateDownload(String(url)),
   );
   ipcMain.handle(channels.appQuit, async () => app.quit());
+  ipcMain.handle(channels.appResizeWindow, async (event, height) =>
+    callbacks.resizeWindow(event, Number(height)),
+  );
   ipcMain.handle(channels.appShowLibrary, async () => callbacks.showLibrary());
   ipcMain.handle(channels.appShowOnboarding, async () =>
     callbacks.showOnboarding(),

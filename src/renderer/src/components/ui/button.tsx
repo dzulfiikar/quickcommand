@@ -5,12 +5,12 @@ import type * as React from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "pressable inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-base font-medium whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/24 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "pressable inline-flex shrink-0 items-center justify-center gap-2 rounded-sm font-mono text-base font-medium whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/24 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         default:
-          "bg-[linear-gradient(180deg,var(--primary-bright),var(--primary-deep))] text-primary-foreground shadow-[var(--accent-glow),inset_0_1px_0_oklch(1_0_0_/_25%)] hover:brightness-[1.06] active:brightness-95",
+          "bg-primary text-primary-foreground font-semibold shadow-[var(--accent-glow)] hover:brightness-[1.08] hover:shadow-[var(--accent-glow),var(--accent-glow)] active:brightness-95",
         destructive:
           "bg-destructive text-destructive-foreground shadow-[0_1px_2px_oklch(0_0_0_/_22%)] hover:bg-destructive/88 focus-visible:ring-destructive/30",
         outline:

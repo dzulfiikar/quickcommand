@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { CornerDownLeft, Plus, Search } from "lucide-react";
+import { CornerDownLeft, Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useReportContentHeight } from "@/hooks/useReportContentHeight";
 import { fadeIn, surfaceIn } from "@/lib/motion";
 import {
   getSnippetPreviewParts,
@@ -25,6 +26,7 @@ export function PaletteScreen(props: ScreenProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const shellRef = useReportContentHeight<HTMLDivElement>();
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -94,6 +96,7 @@ export function PaletteScreen(props: ScreenProps) {
   if (paramSnippet) {
     return (
       <motion.div
+        ref={shellRef}
         variants={surfaceIn}
         initial="hidden"
         animate="visible"
@@ -113,6 +116,7 @@ export function PaletteScreen(props: ScreenProps) {
 
   return (
     <motion.div
+      ref={shellRef}
       variants={surfaceIn}
       initial="hidden"
       animate="visible"
@@ -130,11 +134,9 @@ export function PaletteScreen(props: ScreenProps) {
             className="flex flex-col gap-5 p-5"
           >
             <div className="flex items-start justify-between gap-4">
-              <div className="space-y-1">
+              <div className="pane-header">
                 <p className="section-label">New snippet</p>
-                <h2 className="text-xl font-semibold tracking-[-0.005em] text-foreground">
-                  Save it once, paste it forever
-                </h2>
+                <h2 className="pane-title-sm">Save it once, paste it forever</h2>
               </div>
               <Button
                 variant="ghost"
@@ -163,10 +165,12 @@ export function PaletteScreen(props: ScreenProps) {
             exit="exit"
           >
             <div className="flex items-center gap-3 border-b border-border px-5 py-4">
-              <Search
-                className="h-[18px] w-[18px] shrink-0 text-muted-foreground"
+              <span
                 aria-hidden="true"
-              />
+                className="shrink-0 select-none font-mono text-lg font-bold leading-none text-accent-text"
+              >
+                ▸
+              </span>
               <input
                 ref={inputRef}
                 aria-label="Search snippets"
@@ -174,7 +178,7 @@ export function PaletteScreen(props: ScreenProps) {
                 aria-activedescendant={
                   showEmpty ? undefined : `palette-option-${selectedIndex}`
                 }
-                className="flex-1 bg-transparent text-lg text-foreground placeholder:text-muted-foreground/80 outline-none"
+                className="flex-1 bg-transparent font-mono text-lg text-foreground placeholder:text-muted-foreground/80 outline-none"
                 placeholder="Search snippets…"
                 type="text"
                 value={query}
@@ -183,9 +187,7 @@ export function PaletteScreen(props: ScreenProps) {
                   setQuery(event.target.value);
                 }}
               />
-              <span className="rounded-md bg-secondary/60 px-1.5 py-0.5 font-mono text-xs tabular-nums text-muted-foreground">
-                {props.filtered.length}
-              </span>
+              <span className="count-chip">{props.filtered.length}</span>
               <Button
                 aria-label="Create a new snippet"
                 variant="ghost"
@@ -223,7 +225,7 @@ export function PaletteScreen(props: ScreenProps) {
                 id="palette-listbox"
                 role="listbox"
                 aria-label="Snippets"
-                className="max-h-[24rem] overflow-y-auto p-2"
+                className="flex max-h-[24rem] flex-col gap-px overflow-y-auto p-2"
               >
                 {props.filtered.map((snippet, index) => {
                   const active = index === selectedIndex;
@@ -236,7 +238,7 @@ export function PaletteScreen(props: ScreenProps) {
                         aria-selected={active}
                         tabIndex={-1}
                         className={cn(
-                          "list-item flex h-12 w-full items-center gap-3 pl-4 pr-3 text-left",
+                          "list-item flex h-11 w-full items-center gap-3 pl-4 pr-3 text-left",
                           active && "list-item-active",
                         )}
                         onClick={() => handleInsert(snippet.id)}
@@ -250,8 +252,8 @@ export function PaletteScreen(props: ScreenProps) {
                           className="snippet-preview-value block min-w-0 flex-1 font-mono text-xs text-muted-foreground"
                         />
                         {snippet.useCount > 0 ? (
-                          <span className="shrink-0 font-mono text-2xs tabular-nums text-muted-foreground">
-                            {snippet.useCount}×
+                          <span className="count-chip shrink-0">
+                            {snippet.useCount}
                           </span>
                         ) : null}
                       </button>
@@ -261,7 +263,7 @@ export function PaletteScreen(props: ScreenProps) {
               </ul>
             )}
 
-            <div className="flex items-center justify-between gap-4 border-t border-border px-5 py-3 text-xs text-muted-foreground">
+            <div className="statusbar justify-between px-5 py-2.5">
               {showEmpty ? (
                 <span className="inline-flex items-center gap-1.5">
                   <span className="kbd">esc</span>

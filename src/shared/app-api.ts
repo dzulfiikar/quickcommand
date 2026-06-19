@@ -35,6 +35,7 @@ export interface QuickCommandAPI {
     showLibrary(): Promise<void>;
     showOnboarding(): Promise<void>;
     hidePalette(): Promise<void>;
+    resizeWindow(height: number): Promise<void>;
     openUpdateDownload(url: string): Promise<void>;
     quit(): Promise<void>;
     getWindowKind(): WindowKind;
