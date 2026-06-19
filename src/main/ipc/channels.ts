@@ -3,6 +3,7 @@ export const channels = {
   appHidePalette: "app:hide-palette",
   appOpenUpdateDownload: "app:open-update-download",
   appQuit: "app:quit",
+  appResizeWindow: "app:resize-window",
   appShowLibrary: "app:show-library",
   appShowOnboarding: "app:show-onboarding",
   diagnosticsLog: "diagnostics:log",

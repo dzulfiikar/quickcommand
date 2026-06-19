@@ -347,7 +347,7 @@ export function LibraryScreen(props: ScreenProps) {
           </span>
           <Button
             aria-label="Create a new snippet"
-            variant="default"
+            variant="outline"
             size="icon-sm"
             onClick={handleNewSnippet}
           >
@@ -367,14 +367,14 @@ export function LibraryScreen(props: ScreenProps) {
               </p>
             </div>
           ) : (
-            <ul className="flex flex-col gap-0.5 p-2" data-library-list>
+            <ul className="flex flex-col gap-px p-2" data-library-list>
               {visibleSnippets.map((snippet, index) => (
                 <li key={snippet.id}>
                   <button
                     type="button"
                     data-library-row
                     className={cn(
-                      "list-item w-full cursor-pointer px-3 py-2.5 text-left",
+                      "list-item w-full cursor-pointer px-3 py-1.5 text-left",
                       selected?.id === snippet.id && "list-item-active",
                     )}
                     onClick={() => handleSelectSnippet(snippet)}
@@ -382,13 +382,13 @@ export function LibraryScreen(props: ScreenProps) {
                       handleListKeyDown(event, snippet, index)
                     }
                   >
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
                       <p className="snippet-preview-title min-w-0 flex-1 text-base font-medium text-foreground">
                         {getSnippetPreviewText(snippet.title)}
                       </p>
                       {snippet.useCount > 0 ? (
-                        <span className="shrink-0 font-mono text-2xs tabular-nums text-muted-foreground">
-                          {snippet.useCount}×
+                        <span className="count-chip shrink-0">
+                          {snippet.useCount}
                         </span>
                       ) : null}
                     </div>
@@ -427,7 +427,7 @@ export function LibraryScreen(props: ScreenProps) {
           </div>
         ) : null}
 
-        <div className="flex items-center gap-1 border-t border-border px-3 py-2">
+        <div className="statusbar px-3 py-1.5">
           {props.permissionGranted ? (
             <span className="status-dot status-dot--success flex-1 pl-1">
               Accessibility ready
@@ -464,7 +464,7 @@ export function LibraryScreen(props: ScreenProps) {
 
       <main className="flex flex-1 flex-col min-w-0 overflow-hidden">
         <ScrollArea className="flex-1 min-h-0">
-          <div className="flex flex-col gap-8 px-6 py-6 md:px-8">
+          <div className="mx-auto flex w-full max-w-[44rem] flex-col gap-6 px-6 py-7 md:px-8">
             {paramSnippet ? (
               <ParamInputForm
                 params={extractParams(paramSnippet.value)}
@@ -483,112 +483,111 @@ export function LibraryScreen(props: ScreenProps) {
               />
             ) : (
               <>
-                <section className="flex flex-col gap-4">
-                  {selected ? (
-                    <>
-                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="min-w-0 space-y-2">
-                          <p className="section-label">Snippet</p>
-                          <h2 className="snippet-text-wrap text-2xl font-semibold leading-tight tracking-[-0.015em] text-foreground">
-                            {selected.title}
-                          </h2>
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                {selected ? (
+                  /* Selected: the snippet title IS the single pane title.
+                     A read-only preview + Paste action sit in the header;
+                     the editor below is a quiet, anchored sub-section. */
+                  <section className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="pane-header min-w-0">
+                        <p className="section-label">Snippet</p>
+                        <h2 className="snippet-text-wrap pane-title pane-title--prompt">
+                          {selected.title}
+                        </h2>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                          <span className="inline-flex items-center gap-1.5">
+                            <Calendar
+                              className="h-3.5 w-3.5"
+                              aria-hidden="true"
+                            />
+                            Created{" "}
+                            {new Date(selected.createdAt).toLocaleDateString()}
+                          </span>
+                          {selected.lastUsedAt ? (
                             <span className="inline-flex items-center gap-1.5">
-                              <Calendar
-                                className="h-3.5 w-3.5"
-                                aria-hidden="true"
-                              />
-                              Created{" "}
+                              <Hash className="h-3.5 w-3.5" aria-hidden="true" />
+                              Last used{" "}
                               {new Date(
-                                selected.createdAt,
+                                selected.lastUsedAt,
                               ).toLocaleDateString()}
                             </span>
-                            {selected.lastUsedAt ? (
-                              <span className="inline-flex items-center gap-1.5">
-                                <Hash
-                                  className="h-3.5 w-3.5"
-                                  aria-hidden="true"
-                                />
-                                Last used{" "}
-                                {new Date(
-                                  selected.lastUsedAt,
-                                ).toLocaleDateString()}
-                              </span>
-                            ) : null}
-                            {hasParams(selected.value) ? (
-                              <span className="inline-flex items-center gap-2">
-                                {extractParams(selected.value).map((param) => (
-                                  <Badge
-                                    key={param}
-                                    variant="outline"
-                                    className="font-mono text-2xs"
-                                  >
-                                    {`{${param}}`}
-                                  </Badge>
-                                ))}
-                              </span>
-                            ) : null}
-                          </div>
+                          ) : null}
+                          {hasParams(selected.value) ? (
+                            <span className="inline-flex items-center gap-2">
+                              {extractParams(selected.value).map((param) => (
+                                <Badge
+                                  key={param}
+                                  variant="outline"
+                                  className="font-mono text-2xs"
+                                >
+                                  {`{${param}}`}
+                                </Badge>
+                              ))}
+                            </span>
+                          ) : null}
                         </div>
-                        <Button
-                          className="shrink-0 gap-2"
-                          onClick={() => handleInsert(selected.id)}
-                        >
-                          <ClipboardPaste className="h-4 w-4" />
-                          Paste snippet
-                        </Button>
                       </div>
-                      <pre className="surface-inset snippet-text-wrap whitespace-pre-wrap p-4 font-mono text-base leading-relaxed text-foreground">
-                        {selected.value}
-                      </pre>
-                    </>
-                  ) : (
-                    <div className="space-y-1.5">
-                      <p className="section-label">Detail</p>
-                      <h2 className="text-xl font-semibold tracking-[-0.005em] text-foreground">
-                        Pick a snippet, or write a new one
+                      <Button
+                        className="shrink-0 gap-2"
+                        onClick={() => handleInsert(selected.id)}
+                      >
+                        <ClipboardPaste className="h-4 w-4" />
+                        Paste snippet
+                      </Button>
+                    </div>
+                    <pre className="command-block tty-prompt snippet-text-wrap whitespace-pre-wrap p-4 text-base leading-relaxed text-foreground">
+                      {selected.value}
+                    </pre>
+
+                    <div className="panel mt-2 flex flex-col gap-4 p-5">
+                      <p className="section-label">Edit</p>
+                      <SnippetForm
+                        deleteDisabled={props.saving}
+                        deleteConfirming={confirmingDelete}
+                        draft={props.draft}
+                        onChange={props.onDraftChange}
+                        onDelete={
+                          props.editingId
+                            ? () => {
+                                setConfirmingDelete(true);
+                                return Promise.resolve();
+                              }
+                            : undefined
+                        }
+                        onConfirmDelete={
+                          props.editingId ? confirmDelete : undefined
+                        }
+                        onCancelDelete={() => setConfirmingDelete(false)}
+                        onSubmit={props.onSubmitSnippet}
+                        saving={props.saving}
+                      />
+                    </div>
+                  </section>
+                ) : (
+                  /* Empty: no snippet selected. ONE pane title; the form is
+                     the hero, anchored in a panel — no competing headline. */
+                  <section className="flex flex-col gap-5">
+                    <div className="pane-header">
+                      <p className="section-label">New snippet</p>
+                      <h2 className="pane-title">
+                        Save it once, paste it forever
                       </h2>
-                      <p className="max-w-[58ch] text-base leading-relaxed text-muted-foreground">
-                        Selecting a snippet on the left shows it here for
-                        review. The form below is always live for the current
-                        draft.
+                      <p className="max-w-[54ch] text-base leading-relaxed text-muted-foreground">
+                        Give it a title, paste in the text, and call it from
+                        anywhere with your shortcut. Pick a snippet on the left
+                        to edit one you already saved.
                       </p>
                     </div>
-                  )}
-                </section>
-
-                <section className="flex flex-col gap-4">
-                  <div className="space-y-1">
-                    <p className="section-label">
-                      {props.editingId ? "Editing" : "New snippet"}
-                    </p>
-                    <h2 className="text-lg font-semibold text-foreground">
-                      {props.editingId
-                        ? "Edit the selected snippet"
-                        : "Save it once, paste it forever"}
-                    </h2>
-                  </div>
-                  <SnippetForm
-                    deleteDisabled={props.saving}
-                    deleteConfirming={confirmingDelete}
-                    draft={props.draft}
-                    onChange={props.onDraftChange}
-                    onDelete={
-                      props.editingId
-                        ? () => {
-                            setConfirmingDelete(true);
-                            return Promise.resolve();
-                          }
-                        : undefined
-                    }
-                    onConfirmDelete={
-                      props.editingId ? confirmDelete : undefined
-                    }
-                    onCancelDelete={() => setConfirmingDelete(false)}
-                    onSubmit={props.onSubmitSnippet}
-                    saving={props.saving}
-                  />
-                </section>
+                    <div className="panel flex flex-col gap-4 p-5">
+                      <SnippetForm
+                        draft={props.draft}
+                        onChange={props.onDraftChange}
+                        onSubmit={props.onSubmitSnippet}
+                        saving={props.saving}
+                      />
+                    </div>
+                  </section>
+                )}
               </>
             )}
           </div>
@@ -614,15 +613,13 @@ export function LibraryScreen(props: ScreenProps) {
           >
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1">
-                <h2
-                  id={settingsTitleId}
-                  className="text-xl font-semibold text-foreground"
-                >
+                <p className="section-label">Config</p>
+                <h2 id={settingsTitleId} className="pane-title-sm">
                   Settings
                 </h2>
                 <p
                   id={settingsDescriptionId}
-                  className="max-w-[44ch] text-base leading-relaxed text-muted-foreground"
+                  className="prose-sans max-w-[44ch] text-base leading-relaxed text-muted-foreground"
                 >
                   Shortcut, launch behavior, and the local snippet file. No
                   sync, no account.
